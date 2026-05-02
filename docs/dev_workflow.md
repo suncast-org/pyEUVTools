@@ -38,12 +38,20 @@ all of the following are true.
 
 ### Scientific criteria
 
+- The Python AIA response must be compared against the canonical IDL-produced
+	AIA response structure for at least one shared observation date.
+- For the initial milestone, that comparison should use the `pyGXrender-test-data`
+	fixture corresponding to `resp_aia_20251126T153431.sav` or an equivalent
+	committed replacement fixture with the same provenance.
 - AIA time-dependent behavior is exercised with at least one validated example
 	date.
 - Output units, wavelength grids, channel ordering, and correction choices are
 	documented.
 - The implementation states exactly what is and is not scientifically equivalent
 	to the IDL/SSW response path.
+- Any structural mismatches between the Python result and the IDL fixture must
+	be documented as either resolved, intentionally normalized, or explicitly out
+	of scope for `0.1.0`.
 - Any remaining scientific gaps are documented as deliberate non-goals for
 	`0.1.0`, not left ambiguous.
 
