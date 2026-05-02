@@ -17,4 +17,5 @@ python -m pip install -e .[dev]
 ## Notes
 
 - `aiapy` is used for AIA wavelength-response functionality.
-- the package targets Python 3.10+
+- the package currently targets Python 3.12+
+

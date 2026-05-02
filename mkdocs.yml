@@ -12,6 +12,7 @@ nav:
   - Installation: install.md
   - Usage: usage.md
   - API Notes: api.md
+  - Dependency Plan: dependency_plan.md
   - Benchmark Spec: benchmark_spec.md
   - Development Workflow: dev_workflow.md
 

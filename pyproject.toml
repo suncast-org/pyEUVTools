@@ -11,7 +11,7 @@ license = { text = "MIT" }
 authors = [
   { name = "Gelu M. Nita" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
   "aiapy>=0.12.0",
   "astropy>=6.1",
@@ -33,8 +33,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
   "Topic :: Scientific/Engineering :: Astronomy",
@@ -69,13 +67,13 @@ addopts = "-q"
 testpaths = ["tests"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py312"
 line-length = 100
 extend-select = ["E", "F", "I"]
 
 [tool.black]
 line-length = 100
-target-version = ["py310"]
+target-version = ["py312"]
 
 [tool.bumpver]
 version_pattern = "MAJOR.MINOR.PATCH"

@@ -1,7 +1,7 @@
 # pyEUVTools: EUV Instrument Response Tools
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-%E2%89%A53.10-blue?logo=python)](https://www.python.org/)
+[![Python](https://img.shields.io/badge/Python-%E2%89%A53.12-blue?logo=python)](https://www.python.org/)
 
 ## Overview
 
@@ -87,6 +87,7 @@ published with GitHub Pages.
 - [Usage](docs/usage.md)
 - [Development workflow](docs/dev_workflow.md)
 - [API notes](docs/api.md)
+- [Dependency plan](docs/dependency_plan.md)
 - [Benchmark specification](docs/benchmark_spec.md)
 
 ## Versioning and Releases
