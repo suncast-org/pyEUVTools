@@ -65,13 +65,14 @@ python -m pip install -e .
 
 ```python
 from astropy.time import Time
-from pyeuvtools.response.aia import build_aia_wavelength_response_set
+from pyeuvtools.response.aia import build_aia_wavelength_response
 
-responses = build_aia_wavelength_response_set(Time("2020-11-26T19:58:31"))
+response = build_aia_wavelength_response(171, Time("2020-11-26T19:58:31"))
+table = response.to_table()
 
-print(responses.instrument)
-print(responses.channels)
-print(responses.responses["171"])
+print(response.channel)
+print(response.response.unit)
+print(table.colnames)
 ```
 
 ## Documentation

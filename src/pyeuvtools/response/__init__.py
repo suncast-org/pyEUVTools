@@ -6,9 +6,10 @@ from .aia import (
     build_aia_wavelength_response,
     build_aia_wavelength_response_set,
 )
-from .models import WavelengthResponseSet
+from .models import AIAChannelWavelengthResponse, WavelengthResponseSet
 
 __all__ = [
+    "AIAChannelWavelengthResponse",
     "STANDARD_AIA_EUV_CHANNELS",
     "WavelengthResponseSet",
     "build_aia_temperature_response",

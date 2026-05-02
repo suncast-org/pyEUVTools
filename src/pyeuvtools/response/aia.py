@@ -5,7 +5,7 @@ from collections.abc import Iterable
 import astropy.units as u
 from astropy.time import Time
 
-from .models import WavelengthResponseSet
+from .models import AIAChannelWavelengthResponse, WavelengthResponseSet
 
 STANDARD_AIA_EUV_CHANNELS: tuple[int, ...] = (94, 131, 171, 193, 211, 304, 335)
 
@@ -19,6 +19,20 @@ def _require_aiapy():
             "AIA response helpers require aiapy. Install pyeuvtools with its runtime dependencies."
         ) from exc
     return Channel, get_correction_table
+
+
+def _normalize_aia_channel(channel: int | str) -> str:
+    channel_label = str(int(channel))
+    if int(channel_label) not in STANDARD_AIA_EUV_CHANNELS:
+        supported = ", ".join(str(value) for value in STANDARD_AIA_EUV_CHANNELS)
+        raise ValueError(
+            f"Unsupported AIA EUV channel {channel_label}. Supported channels: {supported}."
+        )
+    return channel_label
+
+
+def _normalize_obstime(obstime: Time | str | None) -> Time | None:
+    return Time(obstime) if obstime is not None else None
 
 
 def build_aia_wavelength_response(
@@ -42,16 +56,23 @@ def build_aia_wavelength_response(
         Optional preloaded aiapy correction table.
     """
     Channel, get_correction_table = _require_aiapy()
-    obstime_obj = Time(obstime) if obstime is not None else None
+    channel_label = _normalize_aia_channel(channel)
+    obstime_obj = _normalize_obstime(obstime)
     if correction_table is None:
         correction_table = get_correction_table("jsoc")
-    aia_channel = Channel(int(channel) * u.angstrom)
+    aia_channel = Channel(int(channel_label) * u.angstrom)
     response = aia_channel.wavelength_response(
         obstime=obstime_obj,
         include_eve_correction=include_eve_correction,
         correction_table=correction_table,
     )
-    return aia_channel.wavelength, response
+    return AIAChannelWavelengthResponse(
+        channel=channel_label,
+        obstime=obstime_obj,
+        wavelength=aia_channel.wavelength,
+        response=response,
+        include_eve_correction=include_eve_correction,
+    )
 
 
 def build_aia_wavelength_response_set(
@@ -62,22 +83,22 @@ def build_aia_wavelength_response_set(
     correction_table=None,
 ) -> WavelengthResponseSet:
     """Build wavelength responses for a set of AIA EUV channels."""
-    obstime_obj = Time(obstime) if obstime is not None else None
+    obstime_obj = _normalize_obstime(obstime)
     labels: list[str] = []
     response_map = {}
     wavelength_grid = None
     for channel in channels:
-        label = str(int(channel))
-        wavelength, response = build_aia_wavelength_response(
-            label,
+        channel_response = build_aia_wavelength_response(
+            channel,
             obstime_obj,
             include_eve_correction=include_eve_correction,
             correction_table=correction_table,
         )
+        label = channel_response.channel
         if wavelength_grid is None:
-            wavelength_grid = wavelength
+            wavelength_grid = channel_response.wavelength
         labels.append(label)
-        response_map[label] = response
+        response_map[label] = channel_response.response
 
     assert wavelength_grid is not None
     return WavelengthResponseSet(
