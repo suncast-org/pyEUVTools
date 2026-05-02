@@ -26,6 +26,11 @@ The planned first real release target is **0.1.0**, and that milestone should on
 be cut after the package provides a clearly usable AIA response API beyond the
 current thin wrapper layer.
 
+The concrete `0.1.0` release gate is documented in [docs/dev_workflow.md](docs/dev_workflow.md).
+In short, the first release must include a documented usable AIA API, validated
+scientific behavior, at least one downstream-consumable output path, and tests
+for the shipped public surface.
+
 ## Current Scope
 
 - AIA wavelength-response wrappers powered by `aiapy`
