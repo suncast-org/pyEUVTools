@@ -1,8 +1,6 @@
-name: Publish PyPI
+name: Manual Publish PyPI
 
 on:
-  release:
-    types: [published]
   workflow_dispatch:
 
 jobs:
@@ -13,6 +11,24 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Guard scaffold version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          text = Path("pyproject.toml").read_text()
+          match = re.search(r'^version = "([^"]+)"$', text, re.MULTILINE)
+          if match is None:
+              raise SystemExit("Unable to determine project version from pyproject.toml")
+          version = match.group(1)
+          if version == "0.0.0":
+              raise SystemExit(
+                  "Refusing to publish placeholder scaffold version 0.0.0. "
+                  "Implement the first usable AIA response API and bump to a real release version first."
+              )
+          print(f"Publishing candidate version {version}")
+          PY
       - name: Build distributions
         run: |
           python -m pip install --upgrade pip build

@@ -17,6 +17,15 @@ Python interface to the time-dependent AIA instrument response machinery already
 available through `aiapy`, and then build toward GX-compatible temperature
 response tables on top of that foundation.
 
+## Project Status
+
+`pyEUVTools` is currently **pre-alpha**. The repository is intentionally in a
+scaffold-and-implementation phase and is **not intended for a public PyPI release yet**.
+
+The planned first real release target is **0.1.0**, and that milestone should only
+be cut after the package provides a clearly usable AIA response API beyond the
+current thin wrapper layer.
+
 ## Current Scope
 
 - AIA wavelength-response wrappers powered by `aiapy`
@@ -31,18 +40,20 @@ response tables on top of that foundation.
 
 ## Installation
 
-Install the latest release from PyPI:
-
-```bash
-pip install pyeuvtools
-```
-
-For development:
+There is no public PyPI release yet. Use a development install:
 
 ```bash
 git clone https://github.com/suncast-org/pyEUVTools.git
 cd pyEUVTools
 python -m pip install -e .[dev]
+```
+
+For a runtime-only editable install:
+
+```bash
+git clone https://github.com/suncast-org/pyEUVTools.git
+cd pyEUVTools
+python -m pip install -e .
 ```
 
 ## Quick Example
@@ -72,11 +83,12 @@ published with GitHub Pages.
 ## Versioning and Releases
 
 - Package versioning is managed with `bumpver`
-- PyPI publishing is handled through GitHub Actions using trusted publishing
+- PyPI publishing is disabled by default until the first usable AIA response API is implemented
 - Zenodo metadata is tracked in `.zenodo.json` and intended to mint a DOI for releases
 
 ## Status
 
 This repository is the initial scaffold for the package. The AIA wavelength
-response wrapper is implemented. The GX-compatible temperature response layer is
-planned but not yet implemented.
+response wrapper is implemented, but the package is not yet considered ready for
+public release. The GX-compatible temperature response layer is planned but not
+yet implemented, and **0.1.0** remains the target for the first real release.

@@ -1,6 +1,6 @@
 {
   "title": "pyEUVTools: EUV Instrument Response Tools",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "upload_type": "software",
   "description": "pyEUVTools is a SunCAST Python package for building, inspecting, and exporting EUV instrument response products. It is designed as a reusable response-function layer for the broader SunCAST Python ecosystem, starting with AIA time-dependent response support and evolving toward generalized multi-instrument EUV response tooling.",
   "creators": [
@@ -30,5 +30,5 @@
   ],
   "language": "eng",
   "publication_date": "2026-05-01",
-  "notes": "Versioning is managed by bumpver and Zenodo should archive GitHub releases tagged as v*."
+  "notes": "The current scaffold version is intentionally non-releasable. The first public release target is 0.1.0 after a usable AIA response API is implemented."
 }

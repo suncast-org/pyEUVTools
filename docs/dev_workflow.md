@@ -15,6 +15,11 @@ bumpver update --minor
 bumpver update --major
 ```
 
+The current scaffold version is `0.0.0` to mark the repository as pre-alpha and
+explicitly not ready for a public release. The first real release target is
+`0.1.0`, which should only be cut after the package exposes a genuinely usable
+AIA response API.
+
 ## Build and publish
 
 Build locally with:
@@ -23,8 +28,9 @@ Build locally with:
 python -m build
 ```
 
-Publishing to PyPI is intended to happen through the GitHub Actions publish workflow
-triggered from GitHub releases or version tags.
+PyPI publishing is intentionally disabled as a default release path while the
+repository remains in scaffold mode. The publish workflow is manual-only and
+includes a guard against publishing the placeholder scaffold version.
 
 ## Zenodo
 
