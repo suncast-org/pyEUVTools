@@ -30,7 +30,14 @@ column per channel.
 
 - `build_aia_wavelength_response`
 - `build_aia_wavelength_response_set`
-- `build_aia_temperature_response` (planned; currently raises `NotImplementedError`)
+- `build_aia_temperature_response` for the raw folding step analogous to SSW `aia_bp_make_tresp.pro`
+
+The current temperature-response builder is intentionally narrower than the full
+IDL `aia_get_response(/temperature, ...)` path. It performs the core numerical
+folding step: interpolate the wavelength response onto the emissivity wavelength
+grid, zero the out-of-band region, and integrate over wavelength for each
+temperature bin. The surrounding SSW control flow, correction structures, and
+`chiantifix` behavior are still being implemented.
 
 ## CHIANTI backend prototype
 

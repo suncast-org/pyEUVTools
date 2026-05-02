@@ -8,9 +8,10 @@ from .aia import (
 )
 from .chianti import FiascoBackendStatus, ensure_fiasco_database, get_fiasco_backend_status
 from .compare import canonical_aia_benchmark_path, compare_aia_response_to_idl, load_idl_aia_response
-from .models import AIAChannelWavelengthResponse, AIAIDLComparison, IDLAIAResponse, WavelengthResponseSet
+from .models import AIAChannelTemperatureResponse, AIAChannelWavelengthResponse, AIAIDLComparison, IDLAIAResponse, WavelengthResponseSet
 
 __all__ = [
+    "AIAChannelTemperatureResponse",
     "AIAChannelWavelengthResponse",
     "AIAIDLComparison",
     "ensure_fiasco_database",

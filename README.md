@@ -34,6 +34,7 @@ for the shipped public surface.
 ## Current Scope
 
 - AIA wavelength-response wrappers powered by `aiapy`
+- raw AIA temperature-response folding equivalent to the numerical step in SSW `aia_bp_make_tresp.pro`
 - optional `fiasco` backend introspection and database bootstrap helpers for Python-native CHIANTI access
 - IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
 - canonical benchmark planning for raw IDL AIA temperature-response fixtures with full provenance
@@ -106,6 +107,9 @@ published with GitHub Pages.
 ## Status
 
 This repository is the initial scaffold for the package. The AIA wavelength
-response wrapper is implemented, but the package is not yet considered ready for
-public release. The GX-compatible temperature response layer is planned but not
-yet implemented, and **0.1.0** remains the target for the first real release.
+response wrapper is implemented, and the raw emissivity-folding step for AIA
+temperature responses is now available. The package is not yet considered ready
+for public release because the full `aia_get_response(/temperature, ...)`
+compatibility path, including empirical corrections and complete benchmark
+parity, is still in progress. **0.1.0** remains the target for the first real
+release.

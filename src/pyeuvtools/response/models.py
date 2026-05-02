@@ -33,6 +33,34 @@ class AIAChannelWavelengthResponse:
 
 
 @dataclass(frozen=True)
+class AIAChannelTemperatureResponse:
+    """Stable container for one AIA temperature-response product."""
+
+    channel: str
+    obstime: Time | None
+    logte: np.ndarray
+    response: u.Quantity
+    wave: u.Quantity | None = None
+    full_response: u.Quantity | None = None
+    include_eve_correction: bool = False
+
+    def to_table(self) -> QTable:
+        """Export the temperature response as a quantity-aware table."""
+        table = QTable()
+        table["logte"] = self.logte
+        table["response"] = self.response
+        table.meta["instrument"] = "AIA"
+        table.meta["channel"] = self.channel
+        table.meta["include_eve_correction"] = self.include_eve_correction
+        table.meta["obstime"] = None if self.obstime is None else self.obstime.isot
+        if self.wave is not None:
+            table.meta["wave_samples"] = int(self.wave.size)
+        if self.full_response is not None:
+            table.meta["has_full_response"] = True
+        return table
+
+
+@dataclass(frozen=True)
 class IDLAIAResponse:
     """Normalized view of an IDL-produced GX AIA response structure."""
 

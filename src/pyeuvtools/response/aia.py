@@ -4,8 +4,9 @@ from collections.abc import Iterable
 
 import astropy.units as u
 from astropy.time import Time
+import numpy as np
 
-from .models import AIAChannelWavelengthResponse, WavelengthResponseSet
+from .models import AIAChannelTemperatureResponse, AIAChannelWavelengthResponse, WavelengthResponseSet
 
 STANDARD_AIA_EUV_CHANNELS: tuple[int, ...] = (94, 131, 171, 193, 211, 304, 335)
 
@@ -111,14 +112,103 @@ def build_aia_wavelength_response_set(
     )
 
 
-def build_aia_temperature_response(*args, **kwargs):
-    """Placeholder for the future GX-compatible AIA temperature-response builder.
+def _fold_temperature_response(
+    emissivity_wavelength: u.Quantity,
+    emissivity: u.Quantity,
+    response_wavelength: u.Quantity,
+    response: u.Quantity,
+    platescale: u.Quantity,
+) -> tuple[u.Quantity, u.Quantity]:
+    emissivity_wave = u.Quantity(emissivity_wavelength, copy=False)
+    emissivity_values = u.Quantity(emissivity, copy=False)
+    response_wave = u.Quantity(response_wavelength, copy=False)
+    response_values = u.Quantity(response, copy=False)
 
-    The current implementation intentionally stops at the wavelength-response layer.
-    The missing step is the CHIANTI/emissivity folding needed to build a GX-style
-    temperature-response table over a log(T_e) grid.
+    if emissivity_values.ndim != 2:
+        raise ValueError("Emissivity must be a 2-D quantity with shape (n_wave, n_temp).")
+    if emissivity_values.shape[0] != emissivity_wave.size:
+        raise ValueError("Emissivity first dimension must match emissivity_wavelength samples.")
+    if response_values.ndim != 1:
+        raise ValueError("Response must be a 1-D quantity over wavelength.")
+    if response_values.shape[0] != response_wave.size:
+        raise ValueError("Response length must match response_wavelength samples.")
+    if emissivity_wave.size < 2:
+        raise ValueError("Need at least two emissivity wavelength samples to compute the wavelength step.")
+
+    interpolated_values = np.interp(
+        emissivity_wave.to_value(response_wave.unit),
+        response_wave.to_value(response_wave.unit),
+        response_values.to_value(response_values.unit),
+    )
+    in_bounds = (
+        emissivity_wave >= np.min(response_wave)
+    ) & (
+        emissivity_wave <= np.max(response_wave))
+    interpolated_values = np.where(in_bounds, interpolated_values, 0.0)
+    interpolated_response = interpolated_values * response_values.unit
+
+    wave_step = emissivity_wave[1] - emissivity_wave[0]
+    folded_response = np.sum(interpolated_response[:, np.newaxis] * emissivity_values, axis=0)
+    folded_response = folded_response * platescale * wave_step
+    full_response = interpolated_response[:, np.newaxis] * emissivity_values * platescale
+    return folded_response, full_response
+
+
+def build_aia_temperature_response(
+    channel: int | str,
+    *,
+    emissivity_wavelength: u.Quantity,
+    emissivity_logte: np.ndarray,
+    emissivity: u.Quantity,
+    obstime: Time | str | None = None,
+    include_eve_correction: bool = False,
+    correction_table=None,
+    response_wavelength: u.Quantity | None = None,
+    response: u.Quantity | None = None,
+    platescale: u.Quantity = 1.0 * u.dimensionless_unscaled,
+    include_full_response: bool = False,
+):
+    """Fold an AIA wavelength response through an emissivity grid.
+
+    This implements the core numerical step in SSW `aia_bp_make_tresp.pro`:
+    interpolate the wavelength response onto the emissivity wavelength grid,
+    zero the out-of-band region, and integrate over wavelength for each
+    temperature sample. This is the raw folding step only; it does not yet
+    reproduce the full `aia_get_response(/temperature, ...)` control flow.
     """
-    raise NotImplementedError(
-        "AIA temperature-response construction is not implemented yet. "
-        "pyEUVTools currently exposes the time-dependent AIA wavelength-response layer via aiapy."
+    channel_label = _normalize_aia_channel(channel)
+    obstime_obj = _normalize_obstime(obstime)
+
+    if response_wavelength is None or response is None:
+        wavelength_response = build_aia_wavelength_response(
+            channel_label,
+            obstime_obj,
+            include_eve_correction=include_eve_correction,
+            correction_table=correction_table,
+        )
+        response_wavelength = wavelength_response.wavelength
+        response = wavelength_response.response
+        include_eve_correction = wavelength_response.include_eve_correction
+
+    logte = np.asarray(emissivity_logte, dtype=np.float64).reshape(-1)
+    emissivity_values = u.Quantity(emissivity, copy=False)
+    if emissivity_values.shape[1] != logte.size:
+        raise ValueError("Emissivity second dimension must match emissivity_logte samples.")
+
+    temperature_response, full_response = _fold_temperature_response(
+        emissivity_wavelength,
+        emissivity_values,
+        response_wavelength,
+        response,
+        platescale,
+    )
+
+    return AIAChannelTemperatureResponse(
+        channel=channel_label,
+        obstime=obstime_obj,
+        logte=logte,
+        response=temperature_response,
+        wave=u.Quantity(emissivity_wavelength, copy=False) if include_full_response else None,
+        full_response=full_response if include_full_response else None,
+        include_eve_correction=include_eve_correction,
     )
