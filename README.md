@@ -34,6 +34,7 @@ for the shipped public surface.
 ## Current Scope
 
 - AIA wavelength-response wrappers powered by `aiapy`
+- IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
 - response-table data models for future multi-instrument support
 - a package layout intended to grow into a generalized EUV response toolkit
 

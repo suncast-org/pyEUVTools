@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import astropy.units as u
 from astropy.table import QTable
 from astropy.time import Time
+import numpy as np
 
 
 @dataclass(frozen=True)
@@ -29,6 +30,37 @@ class AIAChannelWavelengthResponse:
         table.meta["correction_source"] = self.correction_source
         table.meta["obstime"] = None if self.obstime is None else self.obstime.isot
         return table
+
+
+@dataclass(frozen=True)
+class IDLAIAResponse:
+    """Normalized view of an IDL-produced GX AIA response structure."""
+
+    instrument: str
+    channels: tuple[str, ...]
+    logte: np.ndarray
+    all_response: np.ndarray
+    ds: float
+    source: str
+
+
+@dataclass(frozen=True)
+class AIAIDLComparison:
+    """Structured comparison between the IDL fixture and the Python AIA layer."""
+
+    idl_response: IDLAIAResponse
+    python_response: "WavelengthResponseSet"
+    normalized_idl_channels: tuple[str, ...]
+    normalized_python_channels: tuple[str, ...]
+    instrument_match: bool
+    channel_match: bool
+    idl_temperature_shape: tuple[int, int]
+    python_wavelength_samples: int
+    blocking_gaps: tuple[str, ...]
+
+    @property
+    def abstraction_gap(self) -> bool:
+        return bool(self.blocking_gaps)
 
 
 @dataclass(frozen=True)

@@ -6,13 +6,18 @@ from .aia import (
     build_aia_wavelength_response,
     build_aia_wavelength_response_set,
 )
-from .models import AIAChannelWavelengthResponse, WavelengthResponseSet
+from .compare import compare_aia_response_to_idl, load_idl_aia_response
+from .models import AIAChannelWavelengthResponse, AIAIDLComparison, IDLAIAResponse, WavelengthResponseSet
 
 __all__ = [
     "AIAChannelWavelengthResponse",
+    "AIAIDLComparison",
+    "IDLAIAResponse",
     "STANDARD_AIA_EUV_CHANNELS",
     "WavelengthResponseSet",
     "build_aia_temperature_response",
     "build_aia_wavelength_response",
     "build_aia_wavelength_response_set",
+    "compare_aia_response_to_idl",
+    "load_idl_aia_response",
 ]
