@@ -4,11 +4,17 @@ function GenerateCanonicalAIABenchmark__utc_now
 end
 
 
+function GenerateCanonicalAIABenchmark__default_stamp
+  compile_opt idl2
+  return, '20251126T153431'
+end
+
+
 function GenerateCanonicalAIABenchmark__default_output_dir
   compile_opt idl2
   script_dir = file_dirname(routine_filepath('GenerateCanonicalAIABenchmark'))
   repo_root = file_dirname(file_dirname(script_dir))
-  return, file_expand_path(filepath('20251126T153431', root_dir=filepath('aia', root_dir=filepath('benchmark-data', root_dir=repo_root))))
+  return, file_expand_path(filepath(GenerateCanonicalAIABenchmark__default_stamp(), root_dir=filepath('aia', root_dir=filepath('benchmark-data', root_dir=repo_root))))
 end
 
 
@@ -18,20 +24,59 @@ function GenerateCanonicalAIABenchmark__join, dir, name
 end
 
 
-pro GenerateCanonicalAIABenchmark, obs_time=obs_time, outdir=outdir, warnings_observed=warnings_observed, raw_name=raw_name, metadata_name=metadata_name, source_effarea_file=source_effarea_file, source_emissivity_file=source_emissivity_file
+function GenerateCanonicalAIABenchmark__requested_state_label, evenorm, chiantifix
+  compile_opt idl2
+  if keyword_set(chiantifix) and keyword_set(evenorm) then return, 'evenorm_chiantifix'
+  if keyword_set(chiantifix) and ~keyword_set(evenorm) then return, 'chiantifix_request'
+  if keyword_set(evenorm) then return, 'evenorm'
+  return, 'raw'
+end
+
+
+function GenerateCanonicalAIABenchmark__effective_state_label, evenorm_applied, chiantifix_applied
+  compile_opt idl2
+  if strupcase(string(chiantifix_applied)) eq 'YES' then return, 'evenorm_chiantifix'
+  if strupcase(string(evenorm_applied)) eq 'YES' then return, 'evenorm'
+  return, 'raw'
+end
+
+
+function GenerateCanonicalAIABenchmark__default_basename, requested_state
+  compile_opt idl2
+  stamp = GenerateCanonicalAIABenchmark__default_stamp()
+  if requested_state eq 'evenorm_chiantifix' then return, 'aia_raw_response_' + stamp
+  return, 'aia_raw_response_' + stamp + '_' + requested_state
+end
+
+
+function GenerateCanonicalAIABenchmark__default_benchmark_role, effective_state
+  compile_opt idl2
+  return, effective_state + '_reference'
+end
+
+
+pro GenerateCanonicalAIABenchmark, obs_time=obs_time, outdir=outdir, warnings_observed=warnings_observed, raw_name=raw_name, metadata_name=metadata_name, source_effarea_file=source_effarea_file, source_emissivity_file=source_emissivity_file, evenorm=evenorm, chiantifix=chiantifix, benchmark_role=benchmark_role, notes=notes
   compile_opt idl2
 
   response_tags = ''
   emissinfo_tags = ''
   corrections_tags = ''
+  requested_state = ''
+  effective_state = ''
+  evenorm_applied = ''
+  chiantifix_applied = ''
 
   if n_elements(obs_time) eq 0 then obs_time = '2025-11-26T15:34:31.400'
   if n_elements(outdir) eq 0 then outdir = GenerateCanonicalAIABenchmark__default_output_dir()
-  if n_elements(raw_name) eq 0 then raw_name = 'aia_raw_response_20251126T153431.sav'
-  if n_elements(metadata_name) eq 0 then metadata_name = 'aia_raw_response_20251126T153431.metadata.txt'
   if n_elements(warnings_observed) eq 0 then warnings_observed = ''
   if n_elements(source_effarea_file) eq 0 then source_effarea_file = ''
   if n_elements(source_emissivity_file) eq 0 then source_emissivity_file = ''
+  if n_elements(evenorm) eq 0 then evenorm = 1L
+  if n_elements(chiantifix) eq 0 then chiantifix = 1L
+
+  requested_state = GenerateCanonicalAIABenchmark__requested_state_label(evenorm, chiantifix)
+  if n_elements(raw_name) eq 0 then raw_name = GenerateCanonicalAIABenchmark__default_basename(requested_state) + '.sav'
+  if n_elements(metadata_name) eq 0 then metadata_name = GenerateCanonicalAIABenchmark__default_basename(requested_state) + '.metadata.txt'
 
   if ~file_test(outdir, /directory) then file_mkdir, outdir
 
@@ -39,19 +84,26 @@ pro GenerateCanonicalAIABenchmark, obs_time=obs_time, outdir=outdir, warnings_ob
   generation_time_utc = GenerateCanonicalAIABenchmark__utc_now()
   on_error, 2
 
-  ; The canonical scientific reference is the direct aia_get_response output.
-  raw_response = aia_get_response(timedepend_date=obs_time_vms, /temperature, /dn, /evenorm, /chiantifix)
+  ; The scientific reference is the direct aia_get_response output for the requested state.
+  raw_response = aia_get_response(timedepend_date=obs_time_vms, /temperature, /dn, evenorm=evenorm, chiantifix=chiantifix)
   response_tags = strupcase(tag_names(raw_response))
   if where(response_tags eq 'EMISSINFO', /null) ne -1 then emissinfo_tags = strupcase(tag_names(raw_response.emissinfo))
   if where(response_tags eq 'CORRECTIONS', /null) ne -1 then corrections_tags = strupcase(tag_names(raw_response.corrections))
+  evenorm_applied = (where(corrections_tags eq 'EVENORM_APPLIED', /null) ne -1 ? string(raw_response.corrections.evenorm_applied) : '')
+  chiantifix_applied = (where(corrections_tags eq 'CHIANTIFIX_APPLIED', /null) ne -1 ? string(raw_response.corrections.chiantifix_applied) : '')
+  effective_state = GenerateCanonicalAIABenchmark__effective_state_label(evenorm_applied, chiantifix_applied)
+  if n_elements(benchmark_role) eq 0 then benchmark_role = GenerateCanonicalAIABenchmark__default_benchmark_role(effective_state)
+  if n_elements(notes) eq 0 then notes = 'Direct aia_get_response benchmark for pyEUVTools parity validation. Requested state=' + requested_state + '; effective state=' + effective_state + '.'
 
   metadata = { $
     instrument: 'AIA', $
-    benchmark_role: 'raw_reference', $
+    benchmark_role: string(benchmark_role), $
     obs_time: string(obs_time), $
     timedepend_date: string(obs_time_vms), $
-    evenorm: 1L, $
-    chiantifix: 1L, $
+    evenorm: long(evenorm), $
+    chiantifix: long(chiantifix), $
+    requested_state: requested_state, $
+    effective_state: effective_state, $
     idl_version: !version.release, $
     idl_arch: !version.arch, $
     idl_os: !version.os, $
@@ -67,10 +119,10 @@ pro GenerateCanonicalAIABenchmark, obs_time=obs_time, outdir=outdir, warnings_ob
     abundance_file: (where(emissinfo_tags eq 'ABUNDFILE', /null) ne -1 ? string(raw_response.emissinfo.abundfile) : ''), $
     ioneq_name: (where(emissinfo_tags eq 'IONEQ_NAME', /null) ne -1 ? string(raw_response.emissinfo.ioneq_name) : ''), $
     time_applied: (where(corrections_tags eq 'TIME_APPLIED', /null) ne -1 ? string(raw_response.corrections.time_applied) : ''), $
-    evenorm_applied: (where(corrections_tags eq 'EVENORM_APPLIED', /null) ne -1 ? string(raw_response.corrections.evenorm_applied) : ''), $
-    chiantifix_applied: (where(corrections_tags eq 'CHIANTIFIX_APPLIED', /null) ne -1 ? string(raw_response.corrections.chiantifix_applied) : ''), $
+    evenorm_applied: evenorm_applied, $
+    chiantifix_applied: chiantifix_applied, $
     warnings_observed: warnings_observed, $
-    notes: 'Direct aia_get_response benchmark for pyEUVTools parity validation.' $
+    notes: string(notes) $
   }
 
   raw_path = GenerateCanonicalAIABenchmark__join(outdir, raw_name)
@@ -85,6 +137,8 @@ pro GenerateCanonicalAIABenchmark, obs_time=obs_time, outdir=outdir, warnings_ob
   printf, lun, 'timedepend_date=' + metadata.timedepend_date
   printf, lun, 'evenorm=' + strtrim(metadata.evenorm, 2)
   printf, lun, 'chiantifix=' + strtrim(metadata.chiantifix, 2)
+  printf, lun, 'requested_state=' + metadata.requested_state
+  printf, lun, 'effective_state=' + metadata.effective_state
   printf, lun, 'idl_version=' + metadata.idl_version
   printf, lun, 'idl_arch=' + metadata.idl_arch
   printf, lun, 'idl_os=' + metadata.idl_os
