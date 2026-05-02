@@ -32,6 +32,17 @@ column per channel.
 - `build_aia_wavelength_response_set`
 - `build_aia_temperature_response` (planned; currently raises `NotImplementedError`)
 
+## CHIANTI backend prototype
+
+`pyeuvtools.response.chianti` currently provides:
+
+- `get_fiasco_backend_status` to report whether `fiasco` is importable and whether its configured CHIANTI database is accessible
+- `FiascoBackendStatus` to carry the backend version, configured database roots, and current availability state
+
+This is intentionally a backend-readiness helper, not a temperature-response builder.
+It exists to separate `fiasco installed` from `database actually usable`, which is
+the next concrete gate for the Python-native CHIANTI path.
+
 ## IDL comparison helpers
 
 `pyeuvtools.response.compare` provides:

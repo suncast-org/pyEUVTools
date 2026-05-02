@@ -39,6 +39,9 @@ classifiers = [
 ]
 
 [project.optional-dependencies]
+chianti = [
+  "fiasco>=0.8",
+]
 dev = [
   "black>=24.0",
   "build>=1.2",

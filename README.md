@@ -34,6 +34,7 @@ for the shipped public surface.
 ## Current Scope
 
 - AIA wavelength-response wrappers powered by `aiapy`
+- optional `fiasco` backend introspection for Python-native CHIANTI access
 - IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
 - canonical benchmark planning for raw IDL AIA temperature-response fixtures with full provenance
 - response-table data models for future multi-instrument support
@@ -61,6 +62,12 @@ For a runtime-only editable install:
 git clone https://github.com/suncast-org/pyEUVTools.git
 cd pyEUVTools
 python -m pip install -e .
+```
+
+For the optional Python-native CHIANTI prototype backend:
+
+```bash
+python -m pip install -e .[chianti]
 ```
 
 ## Quick Example
