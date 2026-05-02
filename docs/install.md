@@ -22,6 +22,17 @@ cd pyEUVTools
 python -m pip install -e .[chianti]
 ```
 
+After installing the optional backend, the current prototype API can check or
+provision the configured `fiasco` database paths:
+
+```python
+from pyeuvtools.response import ensure_fiasco_database, get_fiasco_backend_status
+
+status = get_fiasco_backend_status()
+if not status.database_available:
+	status = ensure_fiasco_database(ask_before=False)
+```
+
 ## Notes
 
 - `aiapy` is used for AIA wavelength-response functionality.

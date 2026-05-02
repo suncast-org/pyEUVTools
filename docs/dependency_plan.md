@@ -82,6 +82,16 @@ Risks:
   AIA temperature-response reconstruction is available at the right abstraction
   level
 
+Current verified prototype result:
+
+- `pyEUVTools` now has a prototype helper that can ask `fiasco` to provision its
+  configured database paths.
+- In the current development environment, that helper successfully provisioned a
+  usable local database and reported CHIANTI `11.0.2`.
+- This confirms that Python-native provisioning is feasible, but it also makes
+  the version-alignment problem explicit because the canonical raw AIA benchmark
+  metadata records CHIANTI `9.0.1`.
+
 ### `ChiantiPy`
 
 Strengths:
@@ -116,8 +126,10 @@ Current recommendation:
 
 1. keep `aiapy` for AIA-side correction behavior
 2. investigate `fiasco` first for CHIANTI database provisioning and access
-3. use the raw benchmark to determine whether `fiasco` is sufficient or whether
-   additional reconstruction work is needed for `chiantifix`
+3. add an explicit CHIANTI version-selection strategy so benchmark-parity work is
+  not silently performed against a newer database than the canonical reference
+4. use the raw benchmark to determine whether `fiasco` is sufficient or whether
+  additional reconstruction work is needed for `chiantifix`
 
 ## Remaining reverse-engineering tasks
 

@@ -37,11 +37,15 @@ column per channel.
 `pyeuvtools.response.chianti` currently provides:
 
 - `get_fiasco_backend_status` to report whether `fiasco` is importable and whether its configured CHIANTI database is accessible
+- `ensure_fiasco_database` to ask `fiasco` to provision its configured ASCII and HDF5 CHIANTI databases if they are missing
 - `FiascoBackendStatus` to carry the backend version, configured database roots, and current availability state
 
 This is intentionally a backend-readiness helper, not a temperature-response builder.
 It exists to separate `fiasco installed` from `database actually usable`, which is
 the next concrete gate for the Python-native CHIANTI path.
+
+When the ASCII CHIANTI tree is available, the status helper also reports the
+detected CHIANTI database version.
 
 ## IDL comparison helpers
 
