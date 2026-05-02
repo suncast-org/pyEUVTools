@@ -1,0 +1,103 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyeuvtools"
+version = "0.1.0"
+description = "EUV instrument response tools for the SunCAST Python ecosystem"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "MIT" }
+authors = [
+  { name = "Gelu M. Nita" }
+]
+requires-python = ">=3.10"
+dependencies = [
+  "aiapy>=0.12.0",
+  "astropy>=6.1",
+  "numpy>=1.26",
+]
+keywords = [
+  "solar-physics",
+  "euv",
+  "aia",
+  "instrument-response",
+  "sunpy",
+  "aiapy",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Astronomy",
+]
+
+[project.optional-dependencies]
+dev = [
+  "black>=24.0",
+  "build>=1.2",
+  "bumpver>=2024.1130",
+  "mkdocs-material>=9.5",
+  "pytest>=8.0",
+  "ruff>=0.6",
+  "twine>=5.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/suncast-org/pyEUVTools"
+Source = "https://github.com/suncast-org/pyEUVTools"
+"Bug Tracker" = "https://github.com/suncast-org/pyEUVTools/issues"
+Documentation = "https://suncast-org.github.io/pyEUVTools/"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pyeuvtools", "pyeuvtools.*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-select = ["E", "F", "I"]
+
+[tool.black]
+line-length = 100
+target-version = ["py310"]
+
+[tool.bumpver]
+version_pattern = "MAJOR.MINOR.PATCH"
+current_version = "0.1.0"
+commit_message = "bump: release v{new_version}"
+tag_message = "Release v{new_version}"
+commit = true
+tag = true
+push = true
+allow_dirty = false
+tag_name = "v{new_version}"
+tag_regex = "^v(?P<version>\\d+\\.\\d+\\.\\d+)$"
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = [
+  'version = "{version}"',
+]
+"src/pyeuvtools/__init__.py" = [
+  '__version__ = "{version}"',
+]
+"CITATION.cff" = [
+  'version: {version}  # bumpver',
+]
+".zenodo.json" = [
+  '"version": "{version}"',
+]

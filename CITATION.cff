@@ -1,0 +1,11 @@
+cff-version: 1.2.0
+title: "pyEUVTools: EUV Instrument Response Tools"
+message: "If you use pyEUVTools, please cite the software using this metadata."
+type: software
+version: 0.1.0  # bumpver
+authors:
+  - family-names: Nita
+    given-names: Gelu M.
+    orcid: "https://orcid.org/0000-0003-2846-2453"
+repository-code: "https://github.com/suncast-org/pyEUVTools"
+license: MIT

@@ -1,0 +1,20 @@
+site_name: pyEUVTools
+site_description: EUV Instrument Response Tools for the SunCAST Python ecosystem
+site_url: https://suncast-org.github.io/pyEUVTools/
+repo_url: https://github.com/suncast-org/pyEUVTools
+repo_name: suncast-org/pyEUVTools
+
+theme:
+  name: material
+
+nav:
+  - Home: index.md
+  - Installation: install.md
+  - Usage: usage.md
+  - API Notes: api.md
+  - Development Workflow: dev_workflow.md
+
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
