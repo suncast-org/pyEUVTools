@@ -21,9 +21,26 @@ The benchmark script may wrap this call for logging, metadata capture, and file
 writing, but the scientific source object for parity should be this direct IDL
 response structure.
 
+For the initial benchmark, the repository draft script is:
+
+- `scripts/idl/GenerateCanonicalAIABenchmark.pro`
+
+## Initial benchmark date
+
+The initial benchmark date for `0.1.0` should be pinned to:
+
+- `2025-11-26T15:34:31.400`
+
+This keeps the first raw benchmark aligned with the existing SunCAST test-model
+epoch already used elsewhere in the workspace, while replacing the incomplete
+legacy fixture provenance with a direct and reproducible IDL source artifact.
+
 ## Required benchmark artifacts
 
-The canonical benchmark set should contain two artifacts.
+For `0.1.0`, only the raw benchmark artifact is required.
+
+The derived GX-style compatibility artifact is explicitly deferred until after
+the first scientific release target is met.
 
 ### 1. Raw benchmark artifact
 
@@ -35,17 +52,11 @@ Recommended saved variables:
 - `raw_response`: the direct IDL response returned by `aia_get_response`
 - `metadata`: a provenance structure with the required fields listed below
 
-### 2. Derived GX-style compatibility artifact
+### Deferred artifact: GX-style compatibility layer
 
-This is a secondary artifact derived deterministically from `raw_response`.
-It exists to support downstream GX-compatible workflows and compatibility tests.
-
-Recommended saved variables:
-
-- `response`: normalized GX-style structure
-- `gxresponse`: alias of `response` for compatibility
-- `metadata`: provenance structure matching the raw artifact and explicitly
-  stating that the GX-style structure is derived from `raw_response`
+GX-style derived artifacts may be added later, but they are not part of the
+minimum benchmark contract for validating the Python implementation or issuing
+the first public release.
 
 ## Required provenance fields
 
@@ -71,7 +82,7 @@ Strongly recommended additional fields:
 - `emiss_version`
 - `source_model`
 - `notes`
-- `benchmark_role`, for example `raw_reference` or `gx_derived`
+- `benchmark_role`, for example `raw_reference`
 
 ## Warning capture
 
@@ -96,9 +107,9 @@ The intended order of implementation is:
 
 1. Reproduce the raw IDL AIA temperature-response structure in Python.
 2. Document any remaining scientific mismatches explicitly.
-3. Derive a GX-style compatibility structure from the Python result.
-4. Validate the derived Python GX-style structure against the IDL-derived
-   compatibility artifact.
+3. Release `0.1.0` once the raw benchmark parity target and provenance
+   requirements are satisfied.
+4. Add GX-style compatibility artifacts later as a follow-on milestone.
 
 ## Interim status
 
@@ -116,8 +127,11 @@ The canonical IDL benchmark script should:
    `chiantifix` settings.
 3. Save the raw response structure.
 4. Save full provenance metadata.
-5. Optionally derive and save the GX-style compatibility structure.
-6. Emit or record checksums for the benchmark artifacts.
+5. Emit or record checksums for the benchmark artifacts.
+
+The first draft of this contract is implemented in:
+
+- `scripts/idl/GenerateCanonicalAIABenchmark.pro`
 
 ## Repository policy
 
