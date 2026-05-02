@@ -6,7 +6,7 @@ from .aia import (
     build_aia_wavelength_response,
     build_aia_wavelength_response_set,
 )
-from .compare import compare_aia_response_to_idl, load_idl_aia_response
+from .compare import canonical_aia_benchmark_path, compare_aia_response_to_idl, load_idl_aia_response
 from .models import AIAChannelWavelengthResponse, AIAIDLComparison, IDLAIAResponse, WavelengthResponseSet
 
 __all__ = [
@@ -18,6 +18,7 @@ __all__ = [
     "build_aia_temperature_response",
     "build_aia_wavelength_response",
     "build_aia_wavelength_response_set",
+    "canonical_aia_benchmark_path",
     "compare_aia_response_to_idl",
     "load_idl_aia_response",
 ]

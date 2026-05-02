@@ -42,10 +42,10 @@ but GX-compatible temperature-response tables are planned and not yet implemente
 ## Compare against the canonical IDL AIA fixture
 
 ```python
-from pyeuvtools.response import compare_aia_response_to_idl
+from pyeuvtools.response import canonical_aia_benchmark_path, compare_aia_response_to_idl
 
 comparison = compare_aia_response_to_idl(
-	"../pyGXrender-test-data/raw/responses/20251126T153431/resp_aia_20251126T153431.sav",
+	canonical_aia_benchmark_path(),
 	"2025-11-26T15:34:31",
 )
 
@@ -56,5 +56,5 @@ print(comparison.blocking_gaps)
 ```
 
 This helper is intended to make the current scientific gap explicit. Today the
-IDL fixture is a GX-style temperature-response structure, while the shipped Python
+canonical IDL fixture is a temperature-response structure, while the shipped Python
 API still exposes wavelength responses.

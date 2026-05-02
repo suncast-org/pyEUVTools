@@ -113,10 +113,12 @@ The intended order of implementation is:
 
 ## Interim status
 
-Until the canonical raw benchmark artifact is committed, the existing
-`pyGXrender-test-data` AIA response fixture remains useful for structural checks
-only. It should not be treated as the sole scientific release benchmark because
-it does not currently record all required generation flags.
+The canonical raw benchmark artifact now lives in:
+
+- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431.sav`
+
+The older `pyGXrender-test-data` AIA response fixture remains useful for legacy
+structural checks, but it is no longer the primary scientific release benchmark.
 
 ## Expected generator contract
 
@@ -138,3 +140,7 @@ The first draft of this contract is implemented in:
 Because the canonical AIA benchmark fixture is small, it is reasonable to vendor
 the benchmark artifact directly in `pyEUVTools` for reproducible testing, as
 long as its provenance and checksum are tracked alongside it.
+
+The initial canonical benchmark checksum is tracked alongside the artifact in:
+
+- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431.sha256`

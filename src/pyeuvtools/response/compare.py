@@ -17,11 +17,21 @@ def _normalize_idl_aia_channel(channel: str) -> str:
     return value
 
 
+def canonical_aia_benchmark_path() -> Path:
+    """Return the path to the vendored canonical raw AIA benchmark artifact."""
+    return Path(__file__).resolve().parents[3] / "benchmark-data" / "aia" / "20251126T153431" / "aia_raw_response_20251126T153431.sav"
+
+
 def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
-    """Load an IDL-produced GX AIA response structure from a SAV fixture."""
+    """Load an IDL-produced AIA response structure from a SAV fixture."""
     source = str(Path(path))
     data = sio.readsav(source, python_dict=True, verbose=False)
-    candidate_names = ["response", "gxresponse", *[key for key in data.keys() if key not in {"response", "gxresponse"}]]
+    candidate_names = [
+        "raw_response",
+        "response",
+        "gxresponse",
+        *[key for key in data.keys() if key not in {"raw_response", "response", "gxresponse"}],
+    ]
 
     response_item = None
     field_map = None
@@ -33,8 +43,11 @@ def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
         if arr.size == 0 or arr.dtype.names is None:
             continue
         lower_map = {str(field).lower(): field for field in arr.dtype.names}
-        required_fields = {"ds", "logte", "all", "channels", "instrument"}
+        required_fields = {"logte", "all", "channels"}
+        instrument_aliases = {"instrument", "name"}
         if not required_fields.issubset(lower_map):
+            continue
+        if not any(alias in lower_map for alias in instrument_aliases):
             continue
         response_item = arr[0]
         field_map = lower_map
@@ -44,7 +57,8 @@ def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
         keys = ", ".join(sorted(str(key) for key in data.keys()))
         raise ValueError(f"Unsupported IDL AIA response SAV: {source}; keys=[{keys}]")
 
-    instrument_raw = response_item[field_map["instrument"]]
+    instrument_field = "instrument" if "instrument" in field_map else "name"
+    instrument_raw = response_item[field_map[instrument_field]]
     instrument = (
         instrument_raw.decode("utf-8", "ignore")
         if isinstance(instrument_raw, (bytes, np.bytes_))
@@ -61,7 +75,9 @@ def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
         raise ValueError(f"IDL AIA response ALL field must be 2-D, got shape={all_response.shape}")
     if all_response.shape[1] != logte.size and all_response.shape[0] == logte.size:
         all_response = all_response.T
-    ds = float(np.asarray(response_item[field_map["ds"]], dtype=np.float64).reshape(-1)[0])
+    ds = None
+    if "ds" in field_map:
+        ds = float(np.asarray(response_item[field_map["ds"]], dtype=np.float64).reshape(-1)[0])
 
     metadata: dict[str, str] = {}
     if "metadata" in data:
@@ -96,9 +112,10 @@ def compare_aia_response_to_idl(
 ) -> AIAIDLComparison:
     """Compare the shipped Python AIA wavelength-response layer to an IDL AIA SAV fixture.
 
-    This comparison is intentionally structural today: the IDL fixture is a GX-style
-    temperature-response structure, while the current Python API exposes wavelength
-    responses. The returned object makes that abstraction gap explicit.
+    This comparison is intentionally structural today: the canonical raw IDL
+    benchmark is a temperature-response structure, while the current Python API
+    exposes wavelength responses. The returned object makes that abstraction gap
+    explicit.
     """
     idl_response = load_idl_aia_response(path)
     python_response = build_aia_wavelength_response_set(

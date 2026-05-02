@@ -6,25 +6,18 @@ import astropy.units as u
 import pytest
 from astropy.time import Time
 
-from pyeuvtools.response.compare import compare_aia_response_to_idl, load_idl_aia_response
+from pyeuvtools.response.compare import canonical_aia_benchmark_path, compare_aia_response_to_idl, load_idl_aia_response
 from pyeuvtools.response.models import WavelengthResponseSet
 
 
 def _fixture_path() -> Path:
-    return (
-        Path(__file__).resolve().parents[2]
-        / "pyGXrender-test-data"
-        / "raw"
-        / "responses"
-        / "20251126T153431"
-        / "resp_aia_20251126T153431.sav"
-    )
+    return canonical_aia_benchmark_path()
 
 
 def test_load_idl_aia_response_reads_fixture_when_available() -> None:
     fixture = _fixture_path()
     if not fixture.exists():
-        pytest.skip("Canonical pyGXrender-test-data AIA fixture is not available in this checkout")
+        pytest.skip("Canonical in-repo AIA benchmark fixture is not available in this checkout")
 
     response = load_idl_aia_response(fixture)
 
@@ -32,15 +25,19 @@ def test_load_idl_aia_response_reads_fixture_when_available() -> None:
     assert response.channels == ("A94", "A131", "A171", "A193", "A211", "A304", "A335")
     assert response.logte.shape == (101,)
     assert response.all_response.shape == (7, 101)
-    assert response.ds == pytest.approx(0.36)
+    assert response.ds is None
     assert response.metadata["instrument"] == "AIA"
-    assert response.metadata["generator"] == "LoadEUVresponse.pro"
+    assert response.metadata["generator"].endswith("GenerateCanonicalAIABenchmark.pro")
+    assert response.metadata["source_effarea_file"].endswith("aia_V9_all_fullinst.genx")
+    assert response.metadata["source_emissivity_file"].endswith("aia_V9_fullemiss.genx")
+    assert response.metadata["evenorm_applied"] == "YES"
+    assert response.metadata["chiantifix_applied"] == "YES"
 
 
 def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.MonkeyPatch) -> None:
     fixture = _fixture_path()
     if not fixture.exists():
-        pytest.skip("Canonical pyGXrender-test-data AIA fixture is not available in this checkout")
+        pytest.skip("Canonical in-repo AIA benchmark fixture is not available in this checkout")
 
     fake_response_set = WavelengthResponseSet(
         instrument="AIA",
@@ -69,7 +66,7 @@ def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.
     assert comparison.channel_match is True
     assert comparison.idl_temperature_shape == (7, 101)
     assert comparison.python_wavelength_samples == 2
-    assert comparison.missing_idl_metadata_fields == ("evenorm", "chiantifix")
+    assert comparison.missing_idl_metadata_fields == ()
     assert comparison.abstraction_gap is True
     assert "temperature-response structure" in comparison.blocking_gaps[0]
-    assert "response-generation flags" in comparison.blocking_gaps[1]
+    assert len(comparison.blocking_gaps) == 1

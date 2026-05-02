@@ -40,7 +40,7 @@ class IDLAIAResponse:
     channels: tuple[str, ...]
     logte: np.ndarray
     all_response: np.ndarray
-    ds: float
+    ds: float | None
     source: str
     metadata: dict[str, str]
 
