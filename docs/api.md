@@ -43,6 +43,9 @@ The comparison is intentionally structural at this stage. It records channel and
 instrument agreement and surfaces blocking gaps when the IDL and Python layers do
 not yet represent the same scientific object.
 
+It also checks whether the IDL fixture metadata records the response-generation
+flags needed for reproducibility, including `evenorm` and `chiantifix`.
+
 ## Current scientific scope
 
 The shipped API currently covers the AIA wavelength-response layer via `aiapy`.

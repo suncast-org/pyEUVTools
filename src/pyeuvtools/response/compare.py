@@ -63,6 +63,19 @@ def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
         all_response = all_response.T
     ds = float(np.asarray(response_item[field_map["ds"]], dtype=np.float64).reshape(-1)[0])
 
+    metadata: dict[str, str] = {}
+    if "metadata" in data:
+        metadata_arr = np.asarray(data["metadata"])
+        if metadata_arr.size and metadata_arr.dtype.names is not None:
+            metadata_item = metadata_arr[0]
+            for field in metadata_arr.dtype.names:
+                raw_value = metadata_item[field]
+                if isinstance(raw_value, (bytes, np.bytes_)):
+                    value = raw_value.decode("utf-8", "ignore")
+                else:
+                    value = str(raw_value)
+                metadata[str(field).lower()] = value
+
     return IDLAIAResponse(
         instrument=instrument.upper(),
         channels=channels,
@@ -70,6 +83,7 @@ def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
         all_response=all_response,
         ds=ds,
         source=source,
+        metadata=metadata,
     )
 
 
@@ -95,6 +109,10 @@ def compare_aia_response_to_idl(
     )
     normalized_idl_channels = tuple(_normalize_idl_aia_channel(channel) for channel in idl_response.channels)
     normalized_python_channels = tuple(str(channel) for channel in python_response.channels)
+    required_metadata_fields = ("evenorm", "chiantifix")
+    missing_idl_metadata_fields = tuple(
+        field for field in required_metadata_fields if field not in idl_response.metadata
+    )
 
     blocking_gaps: list[str] = []
     if idl_response.all_response.shape[1] == idl_response.logte.size:
@@ -103,6 +121,11 @@ def compare_aia_response_to_idl(
         )
     if normalized_idl_channels != normalized_python_channels:
         blocking_gaps.append("Channel ordering differs between the IDL fixture and the Python response set.")
+    if missing_idl_metadata_fields:
+        fields = ", ".join(missing_idl_metadata_fields)
+        blocking_gaps.append(
+            f"IDL fixture metadata does not record response-generation flags required for reproducibility: {fields}."
+        )
 
     return AIAIDLComparison(
         idl_response=idl_response,
@@ -113,5 +136,6 @@ def compare_aia_response_to_idl(
         channel_match=normalized_idl_channels == normalized_python_channels,
         idl_temperature_shape=idl_response.all_response.shape,
         python_wavelength_samples=int(python_response.wavelength.size),
+        missing_idl_metadata_fields=missing_idl_metadata_fields,
         blocking_gaps=tuple(blocking_gaps),
     )

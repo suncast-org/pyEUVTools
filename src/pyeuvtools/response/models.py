@@ -42,6 +42,7 @@ class IDLAIAResponse:
     all_response: np.ndarray
     ds: float
     source: str
+    metadata: dict[str, str]
 
 
 @dataclass(frozen=True)
@@ -56,6 +57,7 @@ class AIAIDLComparison:
     channel_match: bool
     idl_temperature_shape: tuple[int, int]
     python_wavelength_samples: int
+    missing_idl_metadata_fields: tuple[str, ...]
     blocking_gaps: tuple[str, ...]
 
     @property

@@ -33,6 +33,8 @@ def test_load_idl_aia_response_reads_fixture_when_available() -> None:
     assert response.logte.shape == (101,)
     assert response.all_response.shape == (7, 101)
     assert response.ds == pytest.approx(0.36)
+    assert response.metadata["instrument"] == "AIA"
+    assert response.metadata["generator"] == "LoadEUVresponse.pro"
 
 
 def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -67,5 +69,7 @@ def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.
     assert comparison.channel_match is True
     assert comparison.idl_temperature_shape == (7, 101)
     assert comparison.python_wavelength_samples == 2
+    assert comparison.missing_idl_metadata_fields == ("evenorm", "chiantifix")
     assert comparison.abstraction_gap is True
     assert "temperature-response structure" in comparison.blocking_gaps[0]
+    assert "response-generation flags" in comparison.blocking_gaps[1]

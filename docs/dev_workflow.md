@@ -43,6 +43,9 @@ all of the following are true.
 - For the initial milestone, that comparison should use the `pyGXrender-test-data`
 	fixture corresponding to `resp_aia_20251126T153431.sav` or an equivalent
 	committed replacement fixture with the same provenance.
+- The benchmark fixture provenance must record the response-generation choices
+	needed for reproducibility, including whether `evenorm` and `chiantifix` were
+	applied.
 - AIA time-dependent behavior is exercised with at least one validated example
 	date.
 - Output units, wavelength grids, channel ordering, and correction choices are
