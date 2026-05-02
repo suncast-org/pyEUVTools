@@ -35,6 +35,7 @@ for the shipped public surface.
 
 - AIA wavelength-response wrappers powered by `aiapy`
 - IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
+- canonical benchmark planning for raw IDL AIA temperature-response fixtures with full provenance
 - response-table data models for future multi-instrument support
 - a package layout intended to grow into a generalized EUV response toolkit
 
@@ -86,6 +87,7 @@ published with GitHub Pages.
 - [Usage](docs/usage.md)
 - [Development workflow](docs/dev_workflow.md)
 - [API notes](docs/api.md)
+- [Benchmark specification](docs/benchmark_spec.md)
 
 ## Versioning and Releases
 

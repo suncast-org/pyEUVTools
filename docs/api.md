@@ -46,6 +46,10 @@ not yet represent the same scientific object.
 It also checks whether the IDL fixture metadata records the response-generation
 flags needed for reproducibility, including `evenorm` and `chiantifix`.
 
+The current comparison helpers remain useful for interim validation against
+legacy GX-style fixtures, but the long-term scientific target is the raw IDL
+temperature-response benchmark defined in `docs/benchmark_spec.md`.
+
 ## Current scientific scope
 
 The shipped API currently covers the AIA wavelength-response layer via `aiapy`.
