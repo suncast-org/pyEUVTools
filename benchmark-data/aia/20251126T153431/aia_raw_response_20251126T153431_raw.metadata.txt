@@ -1,0 +1,27 @@
+instrument=AIA
+benchmark_role=raw_reference
+obs_time=2025-11-26T15:34:31.400
+timedepend_date=26-Nov-2025 15:34:31.400
+evenorm=0
+chiantifix=0
+requested_state=raw
+effective_state=raw
+idl_version=9.2.0
+idl_arch=arm64
+idl_os=darwin
+ssw_root=/Users/gelu/ssw
+generator=/Users/gelu/code/SUNCAST-ORG/pyEUVTools/scripts/idl/GenerateCanonicalAIABenchmark.pro
+generation_time_utc=Sun May  3 00:03:39 2026
+source_effarea_file=/Users/gelu/ssw/sdo/aia/response/aia_V9_all_fullinst.genx
+source_emissivity_file=/Users/gelu/ssw/sdo/aia/response/aia_V9_fullemiss.genx
+effarea_version=10
+emiss_version=10
+response_units=DN cm^5 s^-1 pix^-1
+chianti_version=9.0.1
+abundance_file=/ssw/packages/chianti/dbase/abundance/sun_coronal_1992_feldman_ext.abund
+ioneq_name=/ssw/packages/chianti/dbase/ioneq/chianti.ioneq
+time_applied=YES
+evenorm_applied=NO
+chiantifix_applied=NO
+warnings_observed=
+notes=Direct aia_get_response benchmark for pyEUVTools parity validation. Requested state=raw; effective state=raw.
