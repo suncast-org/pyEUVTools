@@ -287,3 +287,70 @@ def test_build_fiasco_ion_spectrum_grid_requires_ions(
             wavelength_range=u.Quantity([90.0, 200.0], u.angstrom),
             bin_width=1 * u.angstrom,
         )
+
+
+def test_build_fiasco_ion_spectrum_grid_passes_spectrum_kwargs(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeIon:
+        def __init__(self, ion_name, temperature):
+            self.ion_name = ion_name
+            self.temperature = temperature
+
+    class FakeCollection:
+        def __init__(self, *ions):
+            self.ions = ions
+
+        def spectrum(self, density, emission_measure, **kwargs):
+            assert kwargs['use_two_ion_model'] is False
+            assert kwargs['include_protons'] is False
+            return (
+                u.Quantity([90.5, 91.5], u.angstrom),
+                u.Quantity([[[1.0, 2.0]]], u.erg / (u.angstrom * u.s * u.sr * u.cm**2)),
+            )
+
+    fake_module = SimpleNamespace(Ion=FakeIon, IonCollection=FakeCollection)
+    monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
+
+    grid = chianti.build_fiasco_ion_spectrum_grid(
+        ['Fe 16'],
+        temperature=u.Quantity([1.0e6], u.K),
+        density=1e9 / u.cm**3,
+        wavelength_range=u.Quantity([90.0, 200.0], u.angstrom),
+        bin_width=1 * u.angstrom,
+        use_two_ion_model=False,
+        include_protons=False,
+    )
+
+    assert grid.intensity.shape == (2, 1)
+
+
+def test_screen_fiasco_ions_for_temperature_grid_reports_supported_and_rejected(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeIon:
+        def __init__(self, ion_name, temperature):
+            self.ion_name = ion_name
+            self.temperature = temperature
+
+        def emissivity(self, density, **kwargs):
+            assert density == 1e9 / u.cm**3
+            assert kwargs['use_two_ion_model'] is False
+            if self.ion_name == 'C 5':
+                raise ValueError('temperature above supported range')
+            return u.Quantity([1.0], u.erg / (u.s * u.cm**3))
+
+    fake_module = SimpleNamespace(Ion=FakeIon)
+    monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
+
+    report = chianti.screen_fiasco_ions_for_temperature_grid(
+        ['Fe 16', 'C 5'],
+        temperature=u.Quantity([1.0e6, 2.0e6], u.K),
+        density=1e9 / u.cm**3,
+        use_two_ion_model=False,
+    )
+
+    assert report.requested_ions == ('Fe 16', 'C 5')
+    assert report.supported_ions == ('Fe 16',)
+    assert 'C 5' in report.rejected_ions
+    assert 'temperature above supported range' in report.rejected_ions['C 5']

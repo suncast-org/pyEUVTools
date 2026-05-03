@@ -109,6 +109,17 @@ class FiascoSpectrumGrid:
 
 
 @dataclass(frozen=True)
+class FiascoIonScreening:
+    """Structured result of screening explicit CHIANTI ions on a temperature grid."""
+
+    requested_ions: tuple[str, ...]
+    supported_ions: tuple[str, ...]
+    rejected_ions: dict[str, str]
+    logte: np.ndarray
+    density: u.Quantity
+
+
+@dataclass(frozen=True)
 class IDLAIAResponse:
     """Normalized view of an IDL-produced GX AIA response structure."""
 

@@ -6,7 +6,7 @@ from pathlib import Path
 import astropy.units as u
 import numpy as np
 
-from .models import FiascoSpectrumGrid
+from .models import FiascoIonScreening, FiascoSpectrumGrid
 
 
 def _fiasco_dependency_error() -> ImportError:
@@ -203,6 +203,7 @@ def build_fiasco_ion_spectrum_grid(
     wavelength_range: u.Quantity,
     bin_width: u.Quantity,
     emission_measure: u.Quantity = 1 / u.cm**5,
+    **spectrum_kwargs,
 ) -> FiascoSpectrumGrid:
     """Build a wavelength/temperature spectrum grid from an explicit set of CHIANTI ions."""
     try:
@@ -225,6 +226,7 @@ def build_fiasco_ion_spectrum_grid(
             emission_measure,
             wavelength_range=u.Quantity(wavelength_range, copy=False),
             bin_width=u.Quantity(bin_width, copy=False),
+            **spectrum_kwargs,
         )
     )
     if intensity.shape[0] == temperature_values.size and intensity.shape[1] != temperature_values.size:
@@ -243,4 +245,47 @@ def build_fiasco_ion_spectrum_grid(
         intensity=intensity,
         density=u.Quantity(density, copy=False),
         emission_measure=u.Quantity(emission_measure, copy=False),
+    )
+
+
+def screen_fiasco_ions_for_temperature_grid(
+    ions: tuple[str, ...] | list[str],
+    *,
+    temperature: u.Quantity,
+    density: u.Quantity,
+    **emissivity_kwargs,
+) -> FiascoIonScreening:
+    """Screen explicit CHIANTI ions against a target temperature grid.
+
+    Each ion is probed independently with `Ion.emissivity(...)`. Ions that fail
+    are reported with their first exception line so callers can build the broadest
+    workable subset for a given grid and backend configuration.
+    """
+    try:
+        fiasco = _import_fiasco()
+    except ImportError as exc:
+        raise _fiasco_dependency_error() from exc
+
+    ion_names = tuple(str(ion) for ion in ions)
+    temperature_values = u.Quantity(temperature, copy=False)
+    if temperature_values.ndim != 1:
+        raise ValueError("temperature must be a 1-D quantity array.")
+
+    supported: list[str] = []
+    rejected: dict[str, str] = {}
+    for ion_name in ion_names:
+        try:
+            ion = fiasco.Ion(ion_name, temperature_values)
+            _ = ion.emissivity(density, **emissivity_kwargs)
+        except Exception as exc:
+            rejected[ion_name] = f"{type(exc).__name__}: {str(exc).splitlines()[0]}"
+        else:
+            supported.append(ion_name)
+
+    return FiascoIonScreening(
+        requested_ions=ion_names,
+        supported_ions=tuple(supported),
+        rejected_ions=rejected,
+        logte=np.log10(temperature_values.to_value(u.K)),
+        density=u.Quantity(density, copy=False),
     )

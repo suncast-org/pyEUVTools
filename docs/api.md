@@ -48,6 +48,7 @@ temperature bin. The surrounding SSW control flow, correction structures, and
 - `ensure_fiasco_database` to ask `fiasco` to provision its configured ASCII and HDF5 CHIANTI databases if they are missing
 - `rebuild_fiasco_database` to repair a partial or corrupt local HDF5 cache from the ASCII CHIANTI tree
 - `build_fiasco_ion_spectrum_grid` to build a real wavelength/temperature spectrum grid from an explicit ion subset
+- `screen_fiasco_ions_for_temperature_grid` to find which explicit ions actually support a requested temperature grid under the current backend settings
 - `FiascoBackendStatus` to carry the backend version, configured database roots, and current availability state
 
 This is intentionally a backend-readiness helper, not a temperature-response builder.
@@ -60,6 +61,10 @@ detected CHIANTI database version.
 The ion-spectrum helper is narrower than a full CHIANTI emissivity engine, but it
 provides the first real scientific bridge between `fiasco` and the raw AIA benchmark
 comparison path by returning a binned wavelength/temperature surface for a chosen ion set.
+
+The ion-screening helper complements that bridge by letting callers preflight a
+candidate ion list with the same temperature grid and low-level `fiasco` kwargs,
+such as `use_two_ion_model` or `include_protons`, before attempting a larger spectrum build.
 
 ## IDL comparison helpers
 

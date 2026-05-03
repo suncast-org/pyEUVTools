@@ -13,6 +13,7 @@ from .chianti import (
     ensure_fiasco_database,
     get_fiasco_backend_status,
     rebuild_fiasco_database,
+    screen_fiasco_ions_for_temperature_grid,
 )
 from .compare import (
     canonical_aia_benchmark_path,
@@ -25,6 +26,7 @@ from .models import (
     AIAChannelWavelengthResponse,
     AIAIDLComparison,
     AIATemperatureIDLComparison,
+    FiascoIonScreening,
     FiascoSpectrumGrid,
     IDLAIAResponse,
     TemperatureResponseSet,
@@ -39,6 +41,7 @@ __all__ = [
     "build_fiasco_ion_spectrum_grid",
     "ensure_fiasco_database",
     "FiascoBackendStatus",
+    "FiascoIonScreening",
     "FiascoSpectrumGrid",
     "IDLAIAResponse",
     "STANDARD_AIA_EUV_CHANNELS",
@@ -54,4 +57,5 @@ __all__ = [
     "get_fiasco_backend_status",
     "load_idl_aia_response",
     "rebuild_fiasco_database",
+    "screen_fiasco_ions_for_temperature_grid",
 ]
