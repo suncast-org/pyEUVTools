@@ -85,6 +85,30 @@ class TemperatureResponseSet:
 
 
 @dataclass(frozen=True)
+class FiascoSpectrumGrid:
+    """Stable container for a fiasco-built wavelength/temperature spectrum grid."""
+
+    ions: tuple[str, ...]
+    wavelength: u.Quantity
+    logte: np.ndarray
+    intensity: u.Quantity
+    density: u.Quantity
+    emission_measure: u.Quantity
+
+    def to_table(self) -> QTable:
+        """Export the spectrum grid as a quantity-aware table."""
+        table = QTable()
+        table["wavelength"] = self.wavelength
+        for index, logte in enumerate(self.logte):
+            table[f"intensity_logte_{index}"] = self.intensity[:, index]
+            table.meta[f"logte_{index}"] = float(logte)
+        table.meta["ions"] = list(self.ions)
+        table.meta["density"] = str(self.density)
+        table.meta["emission_measure"] = str(self.emission_measure)
+        return table
+
+
+@dataclass(frozen=True)
 class IDLAIAResponse:
     """Normalized view of an IDL-produced GX AIA response structure."""
 

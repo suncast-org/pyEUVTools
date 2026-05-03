@@ -46,6 +46,8 @@ temperature bin. The surrounding SSW control flow, correction structures, and
 
 - `get_fiasco_backend_status` to report whether `fiasco` is importable and whether its configured CHIANTI database is accessible
 - `ensure_fiasco_database` to ask `fiasco` to provision its configured ASCII and HDF5 CHIANTI databases if they are missing
+- `rebuild_fiasco_database` to repair a partial or corrupt local HDF5 cache from the ASCII CHIANTI tree
+- `build_fiasco_ion_spectrum_grid` to build a real wavelength/temperature spectrum grid from an explicit ion subset
 - `FiascoBackendStatus` to carry the backend version, configured database roots, and current availability state
 
 This is intentionally a backend-readiness helper, not a temperature-response builder.
@@ -54,6 +56,10 @@ the next concrete gate for the Python-native CHIANTI path.
 
 When the ASCII CHIANTI tree is available, the status helper also reports the
 detected CHIANTI database version.
+
+The ion-spectrum helper is narrower than a full CHIANTI emissivity engine, but it
+provides the first real scientific bridge between `fiasco` and the raw AIA benchmark
+comparison path by returning a binned wavelength/temperature surface for a chosen ion set.
 
 ## IDL comparison helpers
 

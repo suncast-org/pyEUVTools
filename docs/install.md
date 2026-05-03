@@ -26,16 +26,19 @@ After installing the optional backend, the current prototype API can check or
 provision the configured `fiasco` database paths:
 
 ```python
-from pyeuvtools.response import ensure_fiasco_database, get_fiasco_backend_status
+from pyeuvtools.response import ensure_fiasco_database, get_fiasco_backend_status, rebuild_fiasco_database
 
 status = get_fiasco_backend_status()
 if not status.database_available:
 	status = ensure_fiasco_database(ask_before=False)
+elif not status.line_data_available:
+	status = rebuild_fiasco_database(ask_before=False, show_progress=False)
 ```
 
 The readiness check now probes a representative ion for line datasets as well,
 so a partial or corrupt HDF5 database will not be reported as temperature-response
-ready just because `fiasco.list_ions()` succeeds.
+ready just because `fiasco.list_ions()` succeeds. When that probe fails, the
+rebuild helper provides the supported recovery path for the configured local cache.
 
 ## Notes
 
