@@ -33,6 +33,10 @@ if not status.database_available:
 	status = ensure_fiasco_database(ask_before=False)
 ```
 
+The readiness check now probes a representative ion for line datasets as well,
+so a partial or corrupt HDF5 database will not be reported as temperature-response
+ready just because `fiasco.list_ions()` succeeds.
+
 ## Notes
 
 - `aiapy` is used for AIA wavelength-response functionality.

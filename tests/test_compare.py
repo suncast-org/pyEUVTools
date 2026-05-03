@@ -3,11 +3,17 @@ from __future__ import annotations
 from pathlib import Path
 
 import astropy.units as u
+import numpy as np
 import pytest
 from astropy.time import Time
 
-from pyeuvtools.response.compare import canonical_aia_benchmark_path, compare_aia_response_to_idl, load_idl_aia_response
-from pyeuvtools.response.models import WavelengthResponseSet
+from pyeuvtools.response.compare import (
+    canonical_aia_benchmark_path,
+    compare_aia_response_to_idl,
+    compare_aia_temperature_response_to_idl,
+    load_idl_aia_response,
+)
+from pyeuvtools.response.models import TemperatureResponseSet, WavelengthResponseSet
 
 
 def _fixture_path() -> Path:
@@ -72,3 +78,81 @@ def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.
     assert comparison.abstraction_gap is True
     assert "temperature-response structure" in comparison.blocking_gaps[0]
     assert len(comparison.blocking_gaps) == 1
+
+
+def test_compare_aia_temperature_response_to_idl_reports_numeric_differences(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixture = _fixture_path()
+    if not fixture.exists():
+        pytest.skip("Canonical in-repo AIA benchmark fixture is not available in this checkout")
+
+    fake_response_set = TemperatureResponseSet(
+        instrument="AIA",
+        obstime=Time("2025-11-26T15:34:31"),
+        channels=("94", "131", "171", "193", "211", "304", "335"),
+        logte=np.linspace(4.0, 9.0, 101),
+        responses={
+            channel: u.Quantity(np.full(101, index + 1.0), u.dimensionless_unscaled)
+            for index, channel in enumerate(("94", "131", "171", "193", "211", "304", "335"))
+        },
+    )
+
+    monkeypatch.setattr(
+        "pyeuvtools.response.compare.build_aia_temperature_response_set",
+        lambda *args, **kwargs: fake_response_set,
+    )
+
+    comparison = compare_aia_temperature_response_to_idl(
+        fixture,
+        emissivity_wavelength=u.Quantity([10.0, 20.0], u.angstrom),
+        emissivity_logte=np.linspace(4.0, 9.0, 101),
+        emissivity=u.Quantity(np.ones((2, 101)), u.dimensionless_unscaled),
+        obstime="2025-11-26T15:34:31",
+    )
+
+    assert comparison.instrument_match is True
+    assert comparison.channel_match is True
+    assert comparison.logte_match is True
+    assert comparison.idl_temperature_shape == (7, 101)
+    assert comparison.python_temperature_shape == (7, 101)
+    assert comparison.missing_idl_metadata_fields == ()
+    assert comparison.abstraction_gap is False
+    assert set(comparison.max_absolute_difference) == {"94", "131", "171", "193", "211", "304", "335"}
+    assert comparison.max_absolute_difference["94"] >= 0.0
+
+
+def test_compare_aia_temperature_response_to_idl_reports_logte_gap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fixture = _fixture_path()
+    if not fixture.exists():
+        pytest.skip("Canonical in-repo AIA benchmark fixture is not available in this checkout")
+
+    fake_response_set = TemperatureResponseSet(
+        instrument="AIA",
+        obstime=Time("2025-11-26T15:34:31"),
+        channels=("94", "131", "171", "193", "211", "304", "335"),
+        logte=np.linspace(4.1, 9.1, 101),
+        responses={
+            channel: u.Quantity(np.full(101, index + 1.0), u.dimensionless_unscaled)
+            for index, channel in enumerate(("94", "131", "171", "193", "211", "304", "335"))
+        },
+    )
+
+    monkeypatch.setattr(
+        "pyeuvtools.response.compare.build_aia_temperature_response_set",
+        lambda *args, **kwargs: fake_response_set,
+    )
+
+    comparison = compare_aia_temperature_response_to_idl(
+        fixture,
+        emissivity_wavelength=u.Quantity([10.0, 20.0], u.angstrom),
+        emissivity_logte=np.linspace(4.0, 9.0, 101),
+        emissivity=u.Quantity(np.ones((2, 101)), u.dimensionless_unscaled),
+        obstime="2025-11-26T15:34:31",
+    )
+
+    assert comparison.logte_match is False
+    assert comparison.abstraction_gap is True
+    assert "Temperature grids differ" in comparison.blocking_gaps[0]

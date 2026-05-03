@@ -6,7 +6,12 @@ import astropy.units as u
 from astropy.time import Time
 import numpy as np
 
-from .models import AIAChannelTemperatureResponse, AIAChannelWavelengthResponse, WavelengthResponseSet
+from .models import (
+    AIAChannelTemperatureResponse,
+    AIAChannelWavelengthResponse,
+    TemperatureResponseSet,
+    WavelengthResponseSet,
+)
 
 STANDARD_AIA_EUV_CHANNELS: tuple[int, ...] = (94, 131, 171, 193, 211, 304, 335)
 
@@ -210,5 +215,44 @@ def build_aia_temperature_response(
         response=temperature_response,
         wave=u.Quantity(emissivity_wavelength, copy=False) if include_full_response else None,
         full_response=full_response if include_full_response else None,
+        include_eve_correction=include_eve_correction,
+    )
+
+
+def build_aia_temperature_response_set(
+    obstime: Time | str | None = None,
+    *,
+    emissivity_wavelength: u.Quantity,
+    emissivity_logte: np.ndarray,
+    emissivity: u.Quantity,
+    channels: Iterable[int | str] = STANDARD_AIA_EUV_CHANNELS,
+    include_eve_correction: bool = False,
+    correction_table=None,
+    platescale: u.Quantity = 1.0 * u.dimensionless_unscaled,
+) -> TemperatureResponseSet:
+    """Fold an emissivity grid through a set of AIA wavelength responses."""
+    obstime_obj = _normalize_obstime(obstime)
+    labels: list[str] = []
+    response_map = {}
+    for channel in channels:
+        channel_response = build_aia_temperature_response(
+            channel,
+            emissivity_wavelength=emissivity_wavelength,
+            emissivity_logte=emissivity_logte,
+            emissivity=emissivity,
+            obstime=obstime_obj,
+            include_eve_correction=include_eve_correction,
+            correction_table=correction_table,
+            platescale=platescale,
+        )
+        labels.append(channel_response.channel)
+        response_map[channel_response.channel] = channel_response.response
+
+    return TemperatureResponseSet(
+        instrument="AIA",
+        obstime=obstime_obj,
+        channels=tuple(labels),
+        logte=np.asarray(emissivity_logte, dtype=np.float64).reshape(-1),
+        responses=response_map,
         include_eve_correction=include_eve_correction,
     )

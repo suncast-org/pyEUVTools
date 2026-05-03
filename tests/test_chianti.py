@@ -21,6 +21,7 @@ def test_get_fiasco_backend_status_reports_available_database(
     )
     monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
     monkeypatch.setattr(chianti, "_import_fiasco_setup_db", lambda: fake_setup_db)
+    monkeypatch.setattr(chianti, "_probe_fiasco_line_data", lambda fiasco: "Fe 16")
 
     status = chianti.get_fiasco_backend_status()
 
@@ -28,7 +29,9 @@ def test_get_fiasco_backend_status_reports_available_database(
     assert status.package_version == "0.8.1"
     assert status.chianti_version == "9.0.1"
     assert status.database_available is True
+    assert status.line_data_available is True
     assert status.ion_count == 2
+    assert status.line_probe_ion == "Fe 16"
     assert status.availability_error is None
 
 
@@ -55,8 +58,38 @@ def test_get_fiasco_backend_status_reports_missing_database(
 
     assert status.chianti_version == "9.0.1"
     assert status.database_available is False
+    assert status.line_data_available is False
     assert status.ion_count is None
     assert "No HDF5 database found" in status.availability_error
+
+
+def test_get_fiasco_backend_status_reports_missing_line_data(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_setup_db = SimpleNamespace(read_chianti_version=lambda root: "9.0.1")
+    fake_module = SimpleNamespace(
+        __version__="0.8.1",
+        defaults={
+            "ascii_dbase_root": "/tmp/chianti_dbase",
+            "hdf5_dbase_root": "/tmp/chianti_dbase.h5",
+        },
+        list_ions=lambda sort=True: ["fe_16", "fe_18"],
+    )
+    monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
+    monkeypatch.setattr(chianti, "_import_fiasco_setup_db", lambda: fake_setup_db)
+
+    def _raise_missing_line_data(fiasco):
+        raise RuntimeError("_elvlc dataset missing for Fe 16")
+
+    monkeypatch.setattr(chianti, "_probe_fiasco_line_data", _raise_missing_line_data)
+
+    status = chianti.get_fiasco_backend_status()
+
+    assert status.database_available is False
+    assert status.line_data_available is False
+    assert status.ion_count == 2
+    assert status.line_probe_ion == "Fe 16"
+    assert "_elvlc dataset missing" in status.availability_error
 
 
 def test_get_fiasco_backend_status_requires_optional_dependency(
@@ -93,6 +126,7 @@ def test_ensure_fiasco_database_runs_check_database_and_returns_status(
     )
     monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
     monkeypatch.setattr(chianti, "_import_fiasco_setup_db", lambda: fake_setup_db)
+    monkeypatch.setattr(chianti, "_probe_fiasco_line_data", lambda fiasco: "Fe 16")
 
     status = chianti.ensure_fiasco_database(ask_before=False)
 
@@ -103,6 +137,7 @@ def test_ensure_fiasco_database_runs_check_database_and_returns_status(
         )
     ]
     assert status.database_available is True
+    assert status.line_data_available is True
     assert status.ion_count == 3
     assert status.chianti_version == "9.0.1"
 

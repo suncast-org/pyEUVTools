@@ -6,8 +6,8 @@ import numpy as np
 import scipy.io as sio
 from astropy.time import Time
 
-from .aia import build_aia_wavelength_response_set
-from .models import AIAIDLComparison, IDLAIAResponse
+from .aia import build_aia_temperature_response_set, build_aia_wavelength_response_set
+from .models import AIAIDLComparison, AIATemperatureIDLComparison, IDLAIAResponse
 
 
 def _normalize_idl_aia_channel(channel: str) -> str:
@@ -155,4 +155,96 @@ def compare_aia_response_to_idl(
         python_wavelength_samples=int(python_response.wavelength.size),
         missing_idl_metadata_fields=missing_idl_metadata_fields,
         blocking_gaps=tuple(blocking_gaps),
+    )
+
+
+def compare_aia_temperature_response_to_idl(
+    path: str | Path,
+    *,
+    emissivity_wavelength,
+    emissivity_logte,
+    emissivity,
+    obstime: Time | str | None = None,
+    include_eve_correction: bool = False,
+    correction_table=None,
+    platescale=None,
+) -> AIATemperatureIDLComparison:
+    """Compare a Python-built AIA temperature-response set against an IDL SAV fixture.
+
+    This helper expects the caller to provide the emissivity grid already chosen
+    for the scientific comparison. It then folds that grid through the Python
+    AIA wavelength responses for the IDL channel order and reports direct
+    per-channel numerical differences against the IDL `ALL` matrix.
+    """
+    idl_response = load_idl_aia_response(path)
+    normalized_idl_channels = tuple(_normalize_idl_aia_channel(channel) for channel in idl_response.channels)
+    python_response = build_aia_temperature_response_set(
+        obstime=obstime,
+        emissivity_wavelength=emissivity_wavelength,
+        emissivity_logte=emissivity_logte,
+        emissivity=emissivity,
+        channels=normalized_idl_channels,
+        include_eve_correction=include_eve_correction,
+        correction_table=correction_table,
+        platescale=1.0 if platescale is None else platescale,
+    )
+    normalized_python_channels = tuple(str(channel) for channel in python_response.channels)
+
+    required_metadata_fields = ("evenorm", "chiantifix")
+    missing_idl_metadata_fields = tuple(
+        field for field in required_metadata_fields if field not in idl_response.metadata
+    )
+
+    python_matrix = np.vstack(
+        [np.asarray(python_response.responses[channel].value, dtype=np.float64) for channel in python_response.channels]
+    )
+    idl_matrix = np.asarray(idl_response.all_response, dtype=np.float64)
+    logte_match = python_response.logte.shape == idl_response.logte.shape and np.allclose(
+        python_response.logte,
+        idl_response.logte,
+        rtol=0.0,
+        atol=1.0e-6,
+    )
+
+    blocking_gaps: list[str] = []
+    if normalized_idl_channels != normalized_python_channels:
+        blocking_gaps.append("Channel ordering differs between the IDL fixture and the Python temperature-response set.")
+    if not logte_match:
+        blocking_gaps.append("Temperature grids differ between the IDL fixture and the Python temperature-response set.")
+    if idl_matrix.shape != python_matrix.shape:
+        blocking_gaps.append(
+            f"Temperature-response matrix shape differs: IDL={idl_matrix.shape}, Python={python_matrix.shape}."
+        )
+    if missing_idl_metadata_fields:
+        fields = ", ".join(missing_idl_metadata_fields)
+        blocking_gaps.append(
+            f"IDL fixture metadata does not record response-generation flags required for reproducibility: {fields}."
+        )
+
+    max_absolute_difference: dict[str, float] = {}
+    max_relative_difference: dict[str, float | None] = {}
+    if not blocking_gaps:
+        for index, channel in enumerate(normalized_python_channels):
+            difference = python_matrix[index] - idl_matrix[index]
+            max_absolute_difference[channel] = float(np.max(np.abs(difference)))
+            nonzero = np.abs(idl_matrix[index]) > 0.0
+            if np.any(nonzero):
+                max_relative_difference[channel] = float(np.max(np.abs(difference[nonzero] / idl_matrix[index][nonzero])))
+            else:
+                max_relative_difference[channel] = None
+
+    return AIATemperatureIDLComparison(
+        idl_response=idl_response,
+        python_response=python_response,
+        normalized_idl_channels=normalized_idl_channels,
+        normalized_python_channels=normalized_python_channels,
+        instrument_match=idl_response.instrument == python_response.instrument.upper(),
+        channel_match=normalized_idl_channels == normalized_python_channels,
+        logte_match=logte_match,
+        idl_temperature_shape=idl_matrix.shape,
+        python_temperature_shape=python_matrix.shape,
+        missing_idl_metadata_fields=missing_idl_metadata_fields,
+        blocking_gaps=tuple(blocking_gaps),
+        max_absolute_difference=max_absolute_difference,
+        max_relative_difference=max_relative_difference,
     )

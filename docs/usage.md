@@ -58,3 +58,28 @@ print(comparison.blocking_gaps)
 This helper is intended to make the current scientific gap explicit. Today the
 canonical IDL fixture is a temperature-response structure, while the shipped Python
 API still exposes wavelength responses.
+
+## Compare a folded temperature-response candidate against the raw IDL benchmark
+
+```python
+import astropy.units as u
+import numpy as np
+from pyeuvtools.response import canonical_aia_benchmark_path, compare_aia_temperature_response_to_idl
+
+comparison = compare_aia_temperature_response_to_idl(
+	canonical_aia_benchmark_path(),
+	emissivity_wavelength=u.Quantity([90.0, 95.0, 100.0], u.angstrom),
+	emissivity_logte=np.linspace(4.0, 9.0, 101),
+	emissivity=u.Quantity(np.ones((3, 101)), u.dimensionless_unscaled),
+	obstime="2025-11-26T15:34:31",
+)
+
+print(comparison.logte_match)
+print(comparison.max_absolute_difference)
+print(comparison.max_relative_difference)
+```
+
+This comparison path expects an already chosen emissivity grid. It does not yet
+construct the CHIANTI emissivity surface itself, but it removes the current
+package-level blocker where the benchmark comparison stopped at the wavelength-response
+abstraction boundary.

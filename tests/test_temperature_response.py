@@ -6,7 +6,7 @@ import pytest
 from astropy.time import Time
 
 from pyeuvtools.response import aia
-from pyeuvtools.response.models import AIAChannelWavelengthResponse
+from pyeuvtools.response.models import AIAChannelTemperatureResponse, AIAChannelWavelengthResponse
 
 
 def test_build_aia_temperature_response_folds_emissivity_grid() -> None:
@@ -87,3 +87,34 @@ def test_build_aia_temperature_response_rejects_mismatched_emissivity_shape() ->
             response_wavelength=u.Quantity([10.0, 20.0], u.angstrom),
             response=u.Quantity([1.0, 2.0], u.dimensionless_unscaled),
         )
+
+
+def test_build_aia_temperature_response_set_collects_channel_results(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fake_builder(channel, **kwargs):
+        return AIAChannelTemperatureResponse(
+            channel=str(channel),
+            obstime=Time("2020-11-26T19:58:31"),
+            logte=np.array([5.0, 6.0]),
+            response=u.Quantity([float(channel), float(channel) + 1.0], u.dimensionless_unscaled),
+            include_eve_correction=kwargs["include_eve_correction"],
+        )
+
+    monkeypatch.setattr(aia, "build_aia_temperature_response", fake_builder)
+
+    response_set = aia.build_aia_temperature_response_set(
+        obstime="2020-11-26T19:58:31",
+        emissivity_wavelength=u.Quantity([10.0, 20.0], u.angstrom),
+        emissivity_logte=np.array([5.0, 6.0]),
+        emissivity=u.Quantity([[1.0, 2.0], [3.0, 4.0]], u.dimensionless_unscaled),
+        channels=(94, 171),
+        include_eve_correction=True,
+    )
+
+    assert response_set.instrument == "AIA"
+    assert response_set.channels == ("94", "171")
+    assert np.allclose(response_set.logte, [5.0, 6.0])
+    assert response_set.include_eve_correction is True
+    assert np.allclose(response_set.responses["94"].value, [94.0, 95.0])
+    assert np.allclose(response_set.responses["171"].value, [171.0, 172.0])

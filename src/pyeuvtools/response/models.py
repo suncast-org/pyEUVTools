@@ -61,6 +61,30 @@ class AIAChannelTemperatureResponse:
 
 
 @dataclass(frozen=True)
+class TemperatureResponseSet:
+    """Container for multi-channel temperature-response products."""
+
+    instrument: str
+    obstime: Time | None
+    channels: tuple[str, ...]
+    logte: np.ndarray
+    responses: dict[str, u.Quantity]
+    include_eve_correction: bool = False
+
+    def to_table(self) -> QTable:
+        """Export the temperature-response set as a quantity-aware table."""
+        table = QTable()
+        table["logte"] = self.logte
+        for channel in self.channels:
+            table[f"response_{channel}"] = self.responses[channel]
+        table.meta["instrument"] = self.instrument
+        table.meta["channels"] = list(self.channels)
+        table.meta["include_eve_correction"] = self.include_eve_correction
+        table.meta["obstime"] = None if self.obstime is None else self.obstime.isot
+        return table
+
+
+@dataclass(frozen=True)
 class IDLAIAResponse:
     """Normalized view of an IDL-produced GX AIA response structure."""
 
@@ -87,6 +111,29 @@ class AIAIDLComparison:
     python_wavelength_samples: int
     missing_idl_metadata_fields: tuple[str, ...]
     blocking_gaps: tuple[str, ...]
+
+    @property
+    def abstraction_gap(self) -> bool:
+        return bool(self.blocking_gaps)
+
+
+@dataclass(frozen=True)
+class AIATemperatureIDLComparison:
+    """Structured comparison between an IDL temperature benchmark and a Python fold."""
+
+    idl_response: IDLAIAResponse
+    python_response: TemperatureResponseSet
+    normalized_idl_channels: tuple[str, ...]
+    normalized_python_channels: tuple[str, ...]
+    instrument_match: bool
+    channel_match: bool
+    logte_match: bool
+    idl_temperature_shape: tuple[int, int]
+    python_temperature_shape: tuple[int, int]
+    missing_idl_metadata_fields: tuple[str, ...]
+    blocking_gaps: tuple[str, ...]
+    max_absolute_difference: dict[str, float]
+    max_relative_difference: dict[str, float | None]
 
     @property
     def abstraction_gap(self) -> bool:

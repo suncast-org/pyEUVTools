@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+import astropy.units as u
+
 
 def _fiasco_dependency_error() -> ImportError:
     return ImportError(
@@ -20,7 +22,9 @@ class FiascoBackendStatus:
     hdf5_dbase_root: Path | None
     chianti_version: str | None
     database_available: bool
+    line_data_available: bool
     ion_count: int | None
+    line_probe_ion: str | None = None
     availability_error: str | None = None
 
 
@@ -38,6 +42,14 @@ def _import_fiasco_setup_db():
     except ImportError as exc:  # pragma: no cover - exercised only in missing-dep envs
         raise _fiasco_dependency_error() from exc
     return setup_db
+
+
+def _probe_fiasco_line_data(fiasco, probe_ion: str = "Fe 16") -> str:
+    """Probe a representative ion for line datasets needed by temperature-response work."""
+    ion = fiasco.Ion(probe_ion, [1.0e6] * u.K)
+    _ = ion.n_levels
+    _ = ion.transitions
+    return probe_ion
 
 
 def get_fiasco_backend_status() -> FiascoBackendStatus:
@@ -72,7 +84,24 @@ def get_fiasco_backend_status() -> FiascoBackendStatus:
             hdf5_dbase_root=Path(hdf5_root) if hdf5_root else None,
             chianti_version=chianti_version,
             database_available=False,
+            line_data_available=False,
             ion_count=None,
+            availability_error=f"{type(exc).__name__}: {exc}",
+        )
+
+    try:
+        line_probe_ion = _probe_fiasco_line_data(fiasco)
+    except Exception as exc:
+        return FiascoBackendStatus(
+            backend="fiasco",
+            package_version=getattr(fiasco, "__version__", None),
+            ascii_dbase_root=Path(ascii_root) if ascii_root else None,
+            hdf5_dbase_root=Path(hdf5_root) if hdf5_root else None,
+            chianti_version=chianti_version,
+            database_available=False,
+            line_data_available=False,
+            ion_count=len(ions),
+            line_probe_ion="Fe 16",
             availability_error=f"{type(exc).__name__}: {exc}",
         )
 
@@ -83,7 +112,9 @@ def get_fiasco_backend_status() -> FiascoBackendStatus:
         hdf5_dbase_root=Path(hdf5_root) if hdf5_root else None,
         chianti_version=chianti_version,
         database_available=True,
+        line_data_available=True,
         ion_count=len(ions),
+        line_probe_ion=line_probe_ion,
         availability_error=None,
     )
 
