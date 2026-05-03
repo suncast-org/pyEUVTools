@@ -9,6 +9,7 @@ import numpy as np
 from .models import (
     AIAChannelTemperatureResponse,
     AIAChannelWavelengthResponse,
+    IDLAIAResponse,
     TemperatureResponseSet,
     WavelengthResponseSet,
 )
@@ -39,6 +40,16 @@ def _normalize_aia_channel(channel: int | str) -> str:
 
 def _normalize_obstime(obstime: Time | str | None) -> Time | None:
     return Time(obstime) if obstime is not None else None
+
+
+def _normalize_idl_style_aia_channel(channel: str) -> str:
+    return channel if channel.upper().startswith("A") else f"A{channel}"
+
+
+def _aia_effective_response_state(*, include_eve_correction: bool) -> tuple[str, str]:
+    if include_eve_correction:
+        return "evenorm", "evenorm"
+    return "raw", "raw"
 
 
 def build_aia_wavelength_response(
@@ -255,4 +266,62 @@ def build_aia_temperature_response_set(
         logte=np.asarray(emissivity_logte, dtype=np.float64).reshape(-1),
         responses=response_map,
         include_eve_correction=include_eve_correction,
+    )
+
+
+def build_aia_temperature_response_idl_view(
+    obstime: Time | str | None = None,
+    *,
+    emissivity_wavelength: u.Quantity,
+    emissivity_logte: np.ndarray,
+    emissivity: u.Quantity,
+    channels: Iterable[int | str] = STANDARD_AIA_EUV_CHANNELS,
+    include_eve_correction: bool = False,
+    correction_table=None,
+    platescale: u.Quantity = 1.0 * u.dimensionless_unscaled,
+    metadata: dict[str, str] | None = None,
+) -> IDLAIAResponse:
+    """Build a normalized GX-style AIA temperature-response structure in Python.
+
+    This wraps the existing multi-channel raw folding path and repackages the
+    result into the same logical fields used by the vendored IDL benchmark:
+    instrument, channels, LOGTE, and ALL.
+    """
+    response_set = build_aia_temperature_response_set(
+        obstime=obstime,
+        emissivity_wavelength=emissivity_wavelength,
+        emissivity_logte=emissivity_logte,
+        emissivity=emissivity,
+        channels=channels,
+        include_eve_correction=include_eve_correction,
+        correction_table=correction_table,
+        platescale=platescale,
+    )
+    requested_state, effective_state = _aia_effective_response_state(
+        include_eve_correction=include_eve_correction,
+    )
+    response_metadata = {
+        "instrument": response_set.instrument,
+        "evenorm": "YES" if include_eve_correction else "NO",
+        "chiantifix": "NO",
+        "requested_state": requested_state,
+        "effective_state": effective_state,
+        "response_units": str(response_set.responses[response_set.channels[0]].unit),
+    }
+    if response_set.obstime is not None:
+        response_metadata["obs_time"] = response_set.obstime.isot
+        response_metadata["timedepend_date"] = response_set.obstime.isot
+    if metadata:
+        response_metadata.update(metadata)
+
+    return IDLAIAResponse(
+        instrument=response_set.instrument.upper(),
+        channels=tuple(_normalize_idl_style_aia_channel(channel) for channel in response_set.channels),
+        logte=np.asarray(response_set.logte, dtype=np.float64),
+        all_response=np.vstack(
+            [np.asarray(response_set.responses[channel].value, dtype=np.float64) for channel in response_set.channels]
+        ),
+        ds=None,
+        source="python-generated",
+        metadata=response_metadata,
     )

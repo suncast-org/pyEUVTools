@@ -32,6 +32,7 @@ column per channel.
 - `build_aia_wavelength_response_set`
 - `build_aia_temperature_response` for the raw folding step analogous to SSW `aia_bp_make_tresp.pro`
 - `build_aia_temperature_response_set` for multi-channel raw folding on a shared emissivity grid
+- `build_aia_temperature_response_idl_view` to package that folded matrix into the same normalized `instrument/channels/LOGTE/ALL` structure used by the IDL benchmark loader
 
 The current temperature-response builder is intentionally narrower than the full
 IDL `aia_get_response(/temperature, ...)` path. It performs the core numerical
@@ -81,6 +82,11 @@ not yet represent the same scientific object.
 When an emissivity grid is available, `compare_aia_temperature_response_to_idl`
 can perform the direct matrix comparison against the IDL `ALL` temperature-response
 array and report per-channel numerical differences.
+
+The same normalized structure is now available on the Python side through
+`build_aia_temperature_response_idl_view`, which makes it possible to inspect or
+serialize a Python-built response with the same logical shape as the SSW/IDL
+benchmark before chasing remaining numerical differences.
 
 It also checks whether the IDL fixture metadata records the response-generation
 flags needed for reproducibility, including `evenorm` and `chiantifix`.

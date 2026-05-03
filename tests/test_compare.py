@@ -13,6 +13,7 @@ from pyeuvtools.response.compare import (
     compare_aia_temperature_response_to_idl,
     load_idl_aia_response,
 )
+from pyeuvtools.response.aia import build_aia_temperature_response_idl_view
 from pyeuvtools.response.models import TemperatureResponseSet, WavelengthResponseSet
 
 
@@ -156,3 +157,40 @@ def test_compare_aia_temperature_response_to_idl_reports_logte_gap(
     assert comparison.logte_match is False
     assert comparison.abstraction_gap is True
     assert "Temperature grids differ" in comparison.blocking_gaps[0]
+
+
+def test_build_aia_temperature_response_idl_view_matches_fixture_shape(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    fake_response_set = TemperatureResponseSet(
+        instrument="AIA",
+        obstime=Time("2025-11-26T15:34:31"),
+        channels=("94", "131"),
+        logte=np.linspace(4.0, 9.0, 5),
+        responses={
+            "94": u.Quantity(np.arange(5, dtype=np.float64), u.ct / u.pix),
+            "131": u.Quantity(np.arange(5, dtype=np.float64) + 10.0, u.ct / u.pix),
+        },
+        include_eve_correction=False,
+    )
+
+    monkeypatch.setattr(
+        "pyeuvtools.response.aia.build_aia_temperature_response_set",
+        lambda *args, **kwargs: fake_response_set,
+    )
+
+    response = build_aia_temperature_response_idl_view(
+        emissivity_wavelength=u.Quantity([10.0, 20.0], u.angstrom),
+        emissivity_logte=np.linspace(4.0, 9.0, 5),
+        emissivity=u.Quantity(np.ones((2, 5)), u.dimensionless_unscaled),
+        obstime="2025-11-26T15:34:31",
+    )
+
+    assert response.instrument == "AIA"
+    assert response.channels == ("A94", "A131")
+    assert response.logte.shape == (5,)
+    assert response.all_response.shape == (2, 5)
+    assert response.metadata["requested_state"] == "raw"
+    assert response.metadata["effective_state"] == "raw"
+    assert response.metadata["chiantifix"] == "NO"
+    assert response.to_mapping()["all"].shape == (2, 5)

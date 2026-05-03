@@ -2,6 +2,7 @@
 
 from .aia import (
     STANDARD_AIA_EUV_CHANNELS,
+    build_aia_temperature_response_idl_view,
     build_aia_temperature_response,
     build_aia_temperature_response_set,
     build_aia_wavelength_response,
@@ -47,6 +48,7 @@ __all__ = [
     "STANDARD_AIA_EUV_CHANNELS",
     "TemperatureResponseSet",
     "WavelengthResponseSet",
+    "build_aia_temperature_response_idl_view",
     "build_aia_temperature_response",
     "build_aia_temperature_response_set",
     "build_aia_wavelength_response",

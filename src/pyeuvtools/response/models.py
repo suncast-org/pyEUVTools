@@ -121,7 +121,7 @@ class FiascoIonScreening:
 
 @dataclass(frozen=True)
 class IDLAIAResponse:
-    """Normalized view of an IDL-produced GX AIA response structure."""
+    """Normalized view of a GX-style AIA temperature-response structure."""
 
     instrument: str
     channels: tuple[str, ...]
@@ -130,6 +130,16 @@ class IDLAIAResponse:
     ds: float | None
     source: str
     metadata: dict[str, str]
+
+    def to_mapping(self) -> dict[str, object]:
+        """Export the normalized response using the canonical IDL field names."""
+        return {
+            "instrument": self.instrument,
+            "channels": np.asarray(self.channels, dtype=object),
+            "logte": np.asarray(self.logte, dtype=np.float64),
+            "all": np.asarray(self.all_response, dtype=np.float64),
+            "ds": self.ds,
+        }
 
 
 @dataclass(frozen=True)
