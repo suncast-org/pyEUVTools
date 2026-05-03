@@ -13,14 +13,14 @@ engineering and validation, not as a runtime dependency for end users.
 
 ## Benchmark target
 
-The scientific target is the vendored raw AIA benchmark artifact at:
+The scientific target is the vendored raw no-correction AIA benchmark artifact at:
 
-- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431.sav`
+- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431_raw.sav`
 
 Its metadata records the benchmark provenance, including:
 
-- `evenorm=1`
-- `chiantifix=1`
+- `evenorm=0`
+- `chiantifix=0`
 - effective-area and emissivity source files
 - CHIANTI version, abundance file, and ionization-equilibrium file
 - correction-applied flags

@@ -30,8 +30,10 @@ def test_load_idl_aia_response_reads_fixture_when_available() -> None:
     assert response.metadata["generator"].endswith("GenerateCanonicalAIABenchmark.pro")
     assert response.metadata["source_effarea_file"].endswith("aia_V9_all_fullinst.genx")
     assert response.metadata["source_emissivity_file"].endswith("aia_V9_fullemiss.genx")
-    assert response.metadata["evenorm_applied"] == "YES"
-    assert response.metadata["chiantifix_applied"] == "YES"
+    assert response.metadata["requested_state"] == "raw"
+    assert response.metadata["effective_state"] == "raw"
+    assert response.metadata["evenorm_applied"] == "NO"
+    assert response.metadata["chiantifix_applied"] == "NO"
 
 
 def test_compare_aia_response_to_idl_reports_structural_gap(monkeypatch: pytest.MonkeyPatch) -> None:

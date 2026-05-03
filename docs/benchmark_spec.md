@@ -180,12 +180,14 @@ The intended order of implementation is:
 
 ## Interim status
 
-The currently vendored benchmark artifact is the `evenorm_chiantifix` flavor and lives in:
+The currently vendored canonical baseline artifact is the raw no-correction flavor and lives in:
+
+- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431_raw.sav`
+
+The previously vendored `evenorm_chiantifix` artifact remains useful as the next
+correction-layer reference and still lives alongside it:
 
 - `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431.sav`
-
-The next benchmark artifact that should be generated and vendored is the raw
-no-correction baseline for the same observation time.
 
 The older `pyGXrender-test-data` AIA response fixture remains useful for legacy
 structural checks, but it is no longer the primary scientific release benchmark.
@@ -211,7 +213,6 @@ Because the canonical AIA benchmark fixture is small, it is reasonable to vendor
 benchmark artifacts directly in `pyEUVTools` for reproducible testing, as long
 as provenance and checksums are tracked alongside them.
 
-The initial vendored `evenorm_chiantifix` benchmark checksum is tracked alongside
-the artifact in:
+The initial vendored raw baseline checksum is tracked alongside the artifact in:
 
-- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431.sha256`
+- `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431_raw.sha256`

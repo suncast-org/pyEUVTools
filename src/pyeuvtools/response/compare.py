@@ -18,8 +18,8 @@ def _normalize_idl_aia_channel(channel: str) -> str:
 
 
 def canonical_aia_benchmark_path() -> Path:
-    """Return the path to the vendored canonical raw AIA benchmark artifact."""
-    return Path(__file__).resolve().parents[3] / "benchmark-data" / "aia" / "20251126T153431" / "aia_raw_response_20251126T153431.sav"
+    """Return the path to the vendored canonical raw no-correction AIA benchmark artifact."""
+    return Path(__file__).resolve().parents[3] / "benchmark-data" / "aia" / "20251126T153431" / "aia_raw_response_20251126T153431_raw.sav"
 
 
 def load_idl_aia_response(path: str | Path) -> IDLAIAResponse:
