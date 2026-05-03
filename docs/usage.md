@@ -157,3 +157,15 @@ run:
 ```bash
 PYTHONPATH=src python scripts/run_screened_raw_compare.py
 ```
+
+That command now also saves a visual comparison artifact by default at:
+
+```text
+artifacts/aia_screened_raw_compare.png
+```
+
+You can choose a different output path with:
+
+```bash
+PYTHONPATH=src python scripts/run_screened_raw_compare.py --plot-output artifacts/my_compare.png
+```

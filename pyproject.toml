@@ -46,6 +46,7 @@ dev = [
   "black>=24.0",
   "build>=1.2",
   "bumpver>=2024.1130",
+  "matplotlib>=3.8",
   "mkdocs-material>=9.5",
   "pytest>=8.0",
   "ruff>=0.6",

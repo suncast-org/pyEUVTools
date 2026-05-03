@@ -74,6 +74,7 @@ such as `use_two_ion_model` or `include_protons`, before attempting a larger spe
 - `load_idl_aia_response` to read a GX-style AIA response SAV fixture
 - `compare_aia_response_to_idl` to compare that fixture against the shipped Python AIA layer
 - `compare_aia_temperature_response_to_idl` to compare a Python-folded temperature-response matrix against the raw IDL benchmark
+- `plot_aia_temperature_response_comparison` to save a channel-by-channel visual comparison of the IDL and Python temperature-response curves versus `logte`
 
 The comparison is intentionally structural at this stage. It records channel and
 instrument agreement and surfaces blocking gaps when the IDL and Python layers do

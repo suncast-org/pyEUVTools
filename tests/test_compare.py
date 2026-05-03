@@ -12,9 +12,10 @@ from pyeuvtools.response.compare import (
     compare_aia_response_to_idl,
     compare_aia_temperature_response_to_idl,
     load_idl_aia_response,
+    plot_aia_temperature_response_comparison,
 )
 from pyeuvtools.response.aia import build_aia_temperature_response_idl_view
-from pyeuvtools.response.models import TemperatureResponseSet, WavelengthResponseSet
+from pyeuvtools.response.models import AIATemperatureIDLComparison, IDLAIAResponse, TemperatureResponseSet, WavelengthResponseSet
 
 
 def _fixture_path() -> Path:
@@ -194,3 +195,55 @@ def test_build_aia_temperature_response_idl_view_matches_fixture_shape(
     assert response.metadata["effective_state"] == "raw"
     assert response.metadata["chiantifix"] == "NO"
     assert response.to_mapping()["all"].shape == (2, 5)
+
+
+def test_plot_aia_temperature_response_comparison_writes_png(tmp_path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+
+    comparison = AIATemperatureIDLComparison(
+        idl_response=IDLAIAResponse(
+            instrument="AIA",
+            channels=("A94", "A131"),
+            logte=np.linspace(4.0, 9.0, 5),
+            all_response=np.array(
+                [
+                    [1.0e-28, 2.0e-28, 4.0e-28, 2.0e-28, 1.0e-28],
+                    [2.0e-29, 3.0e-29, 8.0e-29, 4.0e-29, 2.0e-29],
+                ],
+                dtype=np.float64,
+            ),
+            ds=None,
+            source="test",
+            metadata={},
+        ),
+        python_response=TemperatureResponseSet(
+            instrument="AIA",
+            obstime=Time("2025-11-26T15:34:31"),
+            channels=("94", "131"),
+            logte=np.linspace(4.0, 9.0, 5),
+            responses={
+                "94": u.Quantity([1.1e-28, 2.2e-28, 3.8e-28, 2.1e-28, 1.2e-28], u.ct / u.pix),
+                "131": u.Quantity([2.1e-29, 2.8e-29, 7.5e-29, 4.2e-29, 2.2e-29], u.ct / u.pix),
+            },
+        ),
+        normalized_idl_channels=("94", "131"),
+        normalized_python_channels=("94", "131"),
+        instrument_match=True,
+        channel_match=True,
+        logte_match=True,
+        idl_temperature_shape=(2, 5),
+        python_temperature_shape=(2, 5),
+        missing_idl_metadata_fields=(),
+        blocking_gaps=(),
+        max_absolute_difference={"94": 2.0e-29, "131": 5.0e-30},
+        max_relative_difference={"94": 2.0e-1, "131": 2.5e-1},
+    )
+
+    output = tmp_path / "comparison.png"
+    written = plot_aia_temperature_response_comparison(comparison, output)
+
+    assert written == output
+    assert output.exists()
+    assert output.stat().st_size > 0

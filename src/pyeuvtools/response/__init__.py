@@ -21,6 +21,7 @@ from .compare import (
     compare_aia_response_to_idl,
     compare_aia_temperature_response_to_idl,
     load_idl_aia_response,
+    plot_aia_temperature_response_comparison,
 )
 from .models import (
     AIAChannelTemperatureResponse,
@@ -58,6 +59,7 @@ __all__ = [
     "compare_aia_temperature_response_to_idl",
     "get_fiasco_backend_status",
     "load_idl_aia_response",
+    "plot_aia_temperature_response_comparison",
     "rebuild_fiasco_database",
     "screen_fiasco_ions_for_temperature_grid",
 ]

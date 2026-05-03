@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+from pathlib import Path
 
 import astropy.units as u
 import numpy as np
@@ -10,6 +11,7 @@ from pyeuvtools.response import (
     canonical_aia_benchmark_path,
     compare_aia_temperature_response_to_idl,
     load_idl_aia_response,
+    plot_aia_temperature_response_comparison,
     screen_fiasco_ions_for_temperature_grid,
 )
 
@@ -104,6 +106,12 @@ def parse_args() -> argparse.Namespace:
         default=1.0,
         help="Spectrum bin width in Angstrom. Default: 1",
     )
+    parser.add_argument(
+        "--plot-output",
+        type=Path,
+        default=Path("artifacts/aia_screened_raw_compare.png"),
+        help="Path for the saved comparison plot. Default: artifacts/aia_screened_raw_compare.png",
+    )
     return parser.parse_args()
 
 
@@ -146,6 +154,13 @@ def main() -> int:
         emissivity=full_intensity,
         obstime="2025-11-26T15:34:31",
     )
+    plot_path = plot_aia_temperature_response_comparison(
+        comparison,
+        args.plot_output,
+        figure_title=(
+            "AIA Temperature Response Comparison: raw IDL benchmark vs screened CHIANTI bridge"
+        ),
+    )
 
     print(f"requested ions: {len(report.requested_ions)}")
     print(f"supported ions: {len(report.supported_ions)}")
@@ -164,6 +179,7 @@ def main() -> int:
             print(f"  {channel}: None")
         else:
             print(f"  {channel}: {value:.6e}")
+    print(f"plot saved to: {plot_path}")
     return 0
 
 

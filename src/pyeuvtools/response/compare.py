@@ -10,6 +10,16 @@ from .aia import build_aia_temperature_response_set, build_aia_wavelength_respon
 from .models import AIAIDLComparison, AIATemperatureIDLComparison, IDLAIAResponse
 
 
+def _require_matplotlib_pyplot():
+    try:
+        from matplotlib import pyplot as plt
+    except ImportError as exc:  # pragma: no cover - exercised only in missing-dep envs
+        raise ImportError(
+            "Plotting AIA temperature-response comparisons requires matplotlib."
+        ) from exc
+    return plt
+
+
 def _normalize_idl_aia_channel(channel: str) -> str:
     value = channel.strip().upper()
     if value.startswith("A"):
@@ -248,3 +258,59 @@ def compare_aia_temperature_response_to_idl(
         max_absolute_difference=max_absolute_difference,
         max_relative_difference=max_relative_difference,
     )
+
+
+def plot_aia_temperature_response_comparison(
+    comparison: AIATemperatureIDLComparison,
+    output_path: str | Path,
+    *,
+    figure_title: str | None = None,
+) -> Path:
+    """Save a multi-panel visual comparison of IDL and Python temperature responses."""
+    if comparison.abstraction_gap:
+        details = "; ".join(comparison.blocking_gaps)
+        raise ValueError(f"Cannot plot comparison with unresolved blocking gaps: {details}")
+
+    plt = _require_matplotlib_pyplot()
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    idl_matrix = np.asarray(comparison.idl_response.all_response, dtype=np.float64)
+    logte = np.asarray(comparison.idl_response.logte, dtype=np.float64)
+    channel_count = len(comparison.normalized_idl_channels)
+    ncols = 2
+    nrows = int(np.ceil(channel_count / ncols))
+    figure, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 3.2 * nrows), sharex=True)
+    axes_array = np.atleast_1d(axes).reshape(-1)
+
+    for index, channel in enumerate(comparison.normalized_python_channels):
+        axis = axes_array[index]
+        python_values = np.asarray(comparison.python_response.responses[channel].value, dtype=np.float64)
+        idl_values = idl_matrix[index]
+        idl_plot = np.where(idl_values > 0.0, idl_values, np.nan)
+        python_plot = np.where(python_values > 0.0, python_values, np.nan)
+        axis.plot(logte, idl_plot, label="IDL", color="black", linewidth=1.8)
+        axis.plot(logte, python_plot, label="pyEUVTools", color="#d95f02", linewidth=1.5, linestyle="--")
+        axis.set_yscale("log")
+        axis.set_title(
+            f"AIA {channel}  max rel={comparison.max_relative_difference[channel]:.2e}",
+            fontsize=10,
+        )
+        axis.grid(True, which="both", alpha=0.25)
+        axis.set_xlabel("log10(T / K)")
+        axis.set_ylabel("Response")
+
+    for axis in axes_array[channel_count:]:
+        axis.axis("off")
+
+    handles, labels = axes_array[0].get_legend_handles_labels()
+    figure.legend(handles, labels, loc="upper center", ncol=2, frameon=False)
+    figure.suptitle(
+        figure_title or "AIA Temperature Response Comparison: IDL vs pyEUVTools",
+        fontsize=14,
+        y=0.995,
+    )
+    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.97))
+    figure.savefig(output, dpi=180)
+    plt.close(figure)
+    return output
