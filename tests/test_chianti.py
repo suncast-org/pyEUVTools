@@ -9,6 +9,9 @@ import pytest
 from pyeuvtools.response import chianti
 
 
+pytestmark = pytest.mark.chianti_backend
+
+
 def test_get_fiasco_backend_status_reports_available_database(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -322,7 +325,147 @@ def test_build_fiasco_ion_spectrum_grid_passes_spectrum_kwargs(
         include_protons=False,
     )
 
-    assert grid.intensity.shape == (2, 1)
+    assert grid.ions == ('Fe 16',)
+
+
+def test_build_fiasco_ion_spectrum_grid_reports_timing_stages(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: list[tuple[str, float]] = []
+
+    class FakeIon:
+        def __init__(self, ion_name, temperature):
+            self.ion_name = ion_name
+            self.temperature = temperature
+
+    class FakeCollection:
+        def __init__(self, *ions):
+            self.ions = ions
+
+        def spectrum(self, density, emission_measure, **kwargs):
+            return (
+                u.Quantity([90.5, 91.5], u.angstrom),
+                u.Quantity([[[1.0, 2.0]]], u.erg / (u.angstrom * u.s * u.sr * u.cm**2)),
+            )
+
+    fake_module = SimpleNamespace(Ion=FakeIon, IonCollection=FakeCollection)
+    monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
+
+    grid = chianti.build_fiasco_ion_spectrum_grid(
+        ["Fe 16"],
+        temperature=u.Quantity([1.0e6], u.K),
+        density=1e9 / u.cm**3,
+        wavelength_range=u.Quantity([90.0, 200.0], u.angstrom),
+        bin_width=1 * u.angstrom,
+        timing_callback=lambda stage, elapsed: recorded.append((stage, elapsed)),
+    )
+
+    assert grid.ions == ("Fe 16",)
+    assert [stage for stage, _ in recorded] == [
+        "construct_ions",
+        "build_collection",
+        "compute_spectrum",
+        "normalize_spectrum_output",
+        "align_temperature_axis",
+        "total",
+    ]
+    assert all(elapsed >= 0.0 for _, elapsed in recorded)
+
+
+def test_build_fiasco_ion_spectrum_grid_profiles_spectrum_substeps(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recorded: list[tuple[str, float]] = []
+
+    class FakeTransitions:
+        def __init__(self):
+            self.wavelength = u.Quantity([95.0, 96.0], u.angstrom)
+            self.is_bound_bound = np.array([True, True])
+
+    class FakeIon:
+        def __init__(self, ion_name, temperature):
+            self.ion_name = ion_name
+            self.temperature = temperature
+            self.transitions = FakeTransitions()
+
+        def intensity(self, density, emission_measure, **kwargs):
+            return u.Quantity([[[1.0, 2.0]]], u.erg / (u.s * u.cm**3))
+
+    class FakeCollection:
+        def __init__(self, *ions):
+            self.ions = ions
+
+        def __iter__(self):
+            return iter(self.ions)
+
+        def spectrum(self, density, emission_measure, **kwargs):
+            raise AssertionError("profile_spectrum_call should bypass IonCollection.spectrum")
+
+    fake_module = SimpleNamespace(Ion=FakeIon, IonCollection=FakeCollection)
+    monkeypatch.setattr(chianti, "_import_fiasco", lambda: fake_module)
+
+    grid = chianti.build_fiasco_ion_spectrum_grid(
+        ["Fe 16"],
+        temperature=u.Quantity([1.0e6], u.K),
+        density=1e9 / u.cm**3,
+        wavelength_range=u.Quantity([90.0, 100.0], u.angstrom),
+        bin_width=1 * u.angstrom,
+        timing_callback=lambda stage, elapsed: recorded.append((stage, elapsed)),
+        profile_spectrum_call=True,
+    )
+
+    assert grid.ions == ("Fe 16",)
+    stage_names = [stage for stage, _ in recorded]
+    assert "profile.compute_ion_intensity[Fe 16]" in stage_names
+    assert "profile.histogram_and_convolve" in stage_names
+    assert "profile.finalize_spectrum" in stage_names
+
+
+def test_save_and_load_fiasco_spectrum_grid_roundtrip(tmp_path) -> None:
+    grid = chianti.FiascoSpectrumGrid(
+        ions=("Fe 16", "Fe 18"),
+        wavelength=u.Quantity([90.5, 91.5], u.angstrom),
+        logte=np.array([6.0, 6.2]),
+        intensity=u.Quantity(
+            [[1.0, 2.0], [3.0, 4.0]],
+            u.erg / (u.angstrom * u.s * u.sr * u.cm**2),
+        ),
+        density=1e9 / u.cm**3,
+        emission_measure=1 / u.cm**5,
+    )
+
+    saved = chianti.save_fiasco_spectrum_grid(grid, tmp_path / "grid.npz", extra_metadata={"workflow": "test"})
+    loaded = chianti.load_fiasco_spectrum_grid(saved)
+
+    assert saved.exists()
+    assert loaded.ions == grid.ions
+    assert np.allclose(loaded.wavelength.value, grid.wavelength.value)
+    assert loaded.wavelength.unit == grid.wavelength.unit
+    assert np.allclose(loaded.logte, grid.logte)
+    assert np.allclose(loaded.intensity.value, grid.intensity.value)
+    assert loaded.intensity.unit == grid.intensity.unit
+    assert loaded.density == grid.density
+    assert loaded.emission_measure == grid.emission_measure
+
+
+def test_save_and_load_fiasco_ion_screening_roundtrip(tmp_path) -> None:
+    report = chianti.FiascoIonScreening(
+        requested_ions=("Fe 16", "C 5"),
+        supported_ions=("Fe 16",),
+        rejected_ions={"C 5": "temperature above supported range"},
+        logte=np.array([6.0, 6.2]),
+        density=1e9 / u.cm**3,
+    )
+
+    saved = chianti.save_fiasco_ion_screening(report, tmp_path / "screening.npz", extra_metadata={"workflow": "test"})
+    loaded = chianti.load_fiasco_ion_screening(saved)
+
+    assert saved.exists()
+    assert loaded.requested_ions == report.requested_ions
+    assert loaded.supported_ions == report.supported_ions
+    assert loaded.rejected_ions == report.rejected_ions
+    assert np.allclose(loaded.logte, report.logte)
+    assert loaded.density == report.density
 
 
 def test_screen_fiasco_ions_for_temperature_grid_reports_supported_and_rejected(

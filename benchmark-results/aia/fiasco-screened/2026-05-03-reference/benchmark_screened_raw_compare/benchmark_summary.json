@@ -1,0 +1,32 @@
+{
+  "artifact_dir": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare",
+  "steps": [
+    {
+      "name": "full_build",
+      "elapsed_seconds": 463.0189672500128,
+      "returncode": 0
+    },
+    {
+      "name": "reuse_screening_cache",
+      "elapsed_seconds": 91.82673033303581,
+      "returncode": 0
+    },
+    {
+      "name": "reuse_spectrum_cache",
+      "elapsed_seconds": 22.978666458046064,
+      "returncode": 0
+    },
+    {
+      "name": "plot_rerender",
+      "elapsed_seconds": 1.171109292015899,
+      "returncode": 0
+    }
+  ],
+  "artifacts": {
+    "screening_cache": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare/aia_screened_raw_screening.npz",
+    "spectrum_cache": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare/aia_screened_raw_spectrum_grid.npz",
+    "comparison_data": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare/aia_screened_raw_compare_data.npz",
+    "comparison_plot": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare/aia_screened_raw_compare.png",
+    "rerendered_plot": "benchmark-results/aia/fiasco-screened/2026-05-03-reference/benchmark_screened_raw_compare/aia_screened_raw_compare_rerendered.png"
+  }
+}

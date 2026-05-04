@@ -12,9 +12,18 @@ end
 
 function GenerateCanonicalAIABenchmark__default_output_dir
   compile_opt idl2
-  script_dir = file_dirname(routine_filepath('GenerateCanonicalAIABenchmark'))
-  repo_root = file_dirname(file_dirname(script_dir))
-  return, file_expand_path(filepath(GenerateCanonicalAIABenchmark__default_stamp(), root_dir=filepath('aia', root_dir=filepath('benchmark-data', root_dir=repo_root))))
+  home_dir = getenv('HOME')
+  tmp_dir = getenv('TMPDIR')
+  if n_elements(home_dir) eq 0 or strtrim(home_dir, 2) eq '' then home_dir = ''
+  if n_elements(tmp_dir) eq 0 or strtrim(tmp_dir, 2) eq '' then tmp_dir = '/tmp'
+
+  if strtrim(home_dir, 2) ne '' then begin
+    output_root = filepath('.pyeuvtools', root_dir=home_dir)
+  endif else begin
+    output_root = filepath('pyeuvtools', root_dir=tmp_dir)
+  endelse
+
+  return, file_expand_path(filepath(GenerateCanonicalAIABenchmark__default_stamp(), root_dir=filepath('aia', root_dir=filepath('benchmark-data', root_dir=output_root))))
 end
 
 

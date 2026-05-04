@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -66,6 +69,109 @@ def _normalize_fiasco_spectrum_output(result) -> tuple[u.Quantity, u.Quantity]:
     if intensity.ndim != 2:
         raise ValueError(f"Expected a 2-D spectrum grid after normalization, got shape={intensity.shape}.")
     return wavelength, intensity
+
+
+def _build_profiled_fiasco_collection_spectrum(
+    collection,
+    density: u.Quantity,
+    emission_measure: u.Quantity,
+    *,
+    wavelength_range: u.Quantity | None = None,
+    bin_width: u.Quantity | None = None,
+    kernel=None,
+    timing_callback: Callable[[str, float], None] | None = None,
+    **kwargs,
+) -> tuple[u.Quantity, u.Quantity]:
+    """Mirror `fiasco.IonCollection.spectrum` while exposing finer timing splits."""
+    from astropy.convolution import Model1DKernel, convolve
+    from astropy.modeling.models import Gaussian1D
+
+    def record_timing(stage: str, started_at: float) -> None:
+        if timing_callback is not None:
+            timing_callback(stage, time.perf_counter() - started_at)
+
+    if wavelength_range is None:
+        wavelength_range = u.Quantity([0, np.inf], "angstrom")
+    else:
+        wavelength_range = u.Quantity(wavelength_range, copy=False)
+
+    intensity = None
+    wavelength = None
+    wave_unit = None
+    spectrum_unit = None
+
+    started_collect = time.perf_counter()
+    for ion in collection:
+        ion_label = getattr(ion, "ion_name", str(ion))
+        started_transitions = time.perf_counter()
+        try:
+            wave = ion.transitions.wavelength[ion.transitions.is_bound_bound]
+        except Exception:
+            record_timing(f"profile.collect_transition_wavelengths[{ion_label}]", started_transitions)
+            raise
+        record_timing(f"profile.collect_transition_wavelengths[{ion_label}]", started_transitions)
+
+        started_filter = time.perf_counter()
+        selected_indices, = np.where(
+            np.logical_and(wave >= wavelength_range[0], wave <= wavelength_range[1])
+        )
+        record_timing(f"profile.filter_wavelength_range[{ion_label}]", started_filter)
+        if selected_indices.shape[0] == 0:
+            continue
+
+        started_intensity = time.perf_counter()
+        intens = ion.intensity(density, emission_measure, **kwargs)
+        record_timing(f"profile.compute_ion_intensity[{ion_label}]", started_intensity)
+
+        started_concat = time.perf_counter()
+        if wavelength is None:
+            wavelength = wave[selected_indices].value
+            intensity = intens[:, :, selected_indices].value
+            wave_unit = wave.unit
+            spectrum_unit = intens.unit
+        else:
+            wavelength = np.concatenate((wavelength, wave[selected_indices].value))
+            intensity = np.concatenate((intensity, intens[:, :, selected_indices].value), axis=2)
+        record_timing(f"profile.concatenate_line_data[{ion_label}]", started_concat)
+    record_timing("profile.collect_all_ion_data", started_collect)
+
+    if wavelength is None or wave_unit is None or spectrum_unit is None:
+        raise ValueError("No collision or transition data available for any ion in collection.")
+
+    if np.any(np.isinf(wavelength_range)):
+        wavelength_range = u.Quantity([wavelength.min(), wavelength.max()], wave_unit)
+
+    started_bins = time.perf_counter()
+    if bin_width is None:
+        bin_width = np.diff(wavelength_range)[0] / 100.0
+    else:
+        bin_width = u.Quantity(bin_width, copy=False)
+    num_bins = int((np.diff(wavelength_range)[0] / bin_width).value)
+    wavelength_edges = np.linspace(*wavelength_range.value, num_bins + 1)
+    record_timing("profile.setup_bins", started_bins)
+
+    started_kernel = time.perf_counter()
+    if kernel is None:
+        std = 0.1 * u.angstrom
+        std_eff = (std / bin_width).value
+        x_size = int(8 * std_eff) + 1 if (int(8 * std_eff) % 2) == 0 else int(8 * std_eff)
+        model = Gaussian1D(amplitude=1.0 / np.sqrt(2.0 * np.pi) / std.value, mean=0.0, stddev=std_eff)
+        kernel = Model1DKernel(model, x_size=x_size)
+    record_timing("profile.setup_kernel", started_kernel)
+
+    started_hist_conv = time.perf_counter()
+    spectrum = np.zeros(intensity.shape[:2] + (num_bins,))
+    for i in range(spectrum.shape[0]):
+        for j in range(spectrum.shape[1]):
+            histogrammed, _ = np.histogram(wavelength, bins=wavelength_edges, weights=intensity[i, j, :])
+            spectrum[i, j, :] = convolve(histogrammed, kernel, normalize_kernel=False)
+    record_timing("profile.histogram_and_convolve", started_hist_conv)
+
+    started_finalize = time.perf_counter()
+    spectrum_wavelength = (wavelength_edges[1:] + wavelength_edges[:-1]) / 2.0 * wave_unit
+    spectrum_intensity = spectrum * spectrum_unit / bin_width.unit
+    record_timing("profile.finalize_spectrum", started_finalize)
+    return spectrum_wavelength, spectrum_intensity
 
 
 def get_fiasco_backend_status() -> FiascoBackendStatus:
@@ -203,9 +309,17 @@ def build_fiasco_ion_spectrum_grid(
     wavelength_range: u.Quantity,
     bin_width: u.Quantity,
     emission_measure: u.Quantity = 1 / u.cm**5,
+    timing_callback: Callable[[str, float], None] | None = None,
+    profile_spectrum_call: bool = False,
     **spectrum_kwargs,
 ) -> FiascoSpectrumGrid:
     """Build a wavelength/temperature spectrum grid from an explicit set of CHIANTI ions."""
+    started_total = time.perf_counter()
+
+    def record_timing(stage: str, started_at: float) -> None:
+        if timing_callback is not None:
+            timing_callback(stage, time.perf_counter() - started_at)
+
     try:
         fiasco = _import_fiasco()
     except ImportError as exc:
@@ -219,16 +333,40 @@ def build_fiasco_ion_spectrum_grid(
     if temperature_values.ndim != 1:
         raise ValueError("temperature must be a 1-D quantity array.")
 
-    collection = fiasco.IonCollection(*(fiasco.Ion(ion_name, temperature_values) for ion_name in ion_names))
-    wavelength, intensity = _normalize_fiasco_spectrum_output(
-        collection.spectrum(
+    started_ions = time.perf_counter()
+    ion_objects = tuple(fiasco.Ion(ion_name, temperature_values) for ion_name in ion_names)
+    record_timing("construct_ions", started_ions)
+
+    started_collection = time.perf_counter()
+    collection = fiasco.IonCollection(*ion_objects)
+    record_timing("build_collection", started_collection)
+
+    started_spectrum = time.perf_counter()
+    if profile_spectrum_call:
+        spectrum_result = _build_profiled_fiasco_collection_spectrum(
+            collection,
+            density,
+            emission_measure,
+            wavelength_range=u.Quantity(wavelength_range, copy=False),
+            bin_width=u.Quantity(bin_width, copy=False),
+            timing_callback=timing_callback,
+            **spectrum_kwargs,
+        )
+    else:
+        spectrum_result = collection.spectrum(
             density,
             emission_measure,
             wavelength_range=u.Quantity(wavelength_range, copy=False),
             bin_width=u.Quantity(bin_width, copy=False),
             **spectrum_kwargs,
         )
-    )
+    record_timing("compute_spectrum", started_spectrum)
+
+    started_normalize = time.perf_counter()
+    wavelength, intensity = _normalize_fiasco_spectrum_output(spectrum_result)
+    record_timing("normalize_spectrum_output", started_normalize)
+
+    started_align = time.perf_counter()
     if intensity.shape[0] == temperature_values.size and intensity.shape[1] != temperature_values.size:
         intensity = intensity.T
     elif intensity.shape[0] != temperature_values.size and intensity.shape[1] == temperature_values.size:
@@ -237,6 +375,9 @@ def build_fiasco_ion_spectrum_grid(
         raise ValueError(
             "Normalized fiasco spectrum grid does not align with the requested temperature samples."
         )
+    record_timing("align_temperature_axis", started_align)
+
+    record_timing("total", started_total)
 
     return FiascoSpectrumGrid(
         ions=ion_names,
@@ -246,6 +387,100 @@ def build_fiasco_ion_spectrum_grid(
         density=u.Quantity(density, copy=False),
         emission_measure=u.Quantity(emission_measure, copy=False),
     )
+
+
+def save_fiasco_spectrum_grid(
+    grid: FiascoSpectrumGrid,
+    output_path: str | Path,
+    *,
+    extra_metadata: dict[str, object] | None = None,
+) -> Path:
+    """Persist a built fiasco spectrum grid so later folds can skip the CHIANTI build."""
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "ions": list(grid.ions),
+        "density": {"value": grid.density.value, "unit": str(grid.density.unit)},
+        "emission_measure": {
+            "value": grid.emission_measure.value,
+            "unit": str(grid.emission_measure.unit),
+        },
+    }
+    if extra_metadata:
+        payload["extra_metadata"] = extra_metadata
+
+    np.savez_compressed(
+        output,
+        wavelength=np.asarray(grid.wavelength.to_value(grid.wavelength.unit), dtype=np.float64),
+        wavelength_unit=np.asarray(str(grid.wavelength.unit)),
+        logte=np.asarray(grid.logte, dtype=np.float64),
+        intensity=np.asarray(grid.intensity.to_value(grid.intensity.unit), dtype=np.float64),
+        intensity_unit=np.asarray(str(grid.intensity.unit)),
+        metadata_json=np.asarray(json.dumps(payload)),
+    )
+    return output
+
+
+def load_fiasco_spectrum_grid(path: str | Path) -> FiascoSpectrumGrid:
+    """Load a persisted fiasco spectrum grid from a `.npz` artifact."""
+    with np.load(Path(path), allow_pickle=False) as data:
+        metadata = json.loads(str(data["metadata_json"]))
+        wavelength_unit = u.Unit(str(data["wavelength_unit"]))
+        intensity_unit = u.Unit(str(data["intensity_unit"]))
+        density = metadata["density"]
+        emission_measure = metadata["emission_measure"]
+
+        return FiascoSpectrumGrid(
+            ions=tuple(str(ion) for ion in metadata["ions"]),
+            wavelength=u.Quantity(np.asarray(data["wavelength"], dtype=np.float64), wavelength_unit),
+            logte=np.asarray(data["logte"], dtype=np.float64),
+            intensity=u.Quantity(np.asarray(data["intensity"], dtype=np.float64), intensity_unit),
+            density=u.Quantity(density["value"], u.Unit(density["unit"])),
+            emission_measure=u.Quantity(
+                emission_measure["value"],
+                u.Unit(emission_measure["unit"]),
+            ),
+        )
+
+
+def save_fiasco_ion_screening(
+    report: FiascoIonScreening,
+    output_path: str | Path,
+    *,
+    extra_metadata: dict[str, object] | None = None,
+) -> Path:
+    """Persist an ion-screening report so repeated runs can skip per-ion preflight checks."""
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "density": {"value": report.density.value, "unit": str(report.density.unit)},
+        "rejected_ions": report.rejected_ions,
+    }
+    if extra_metadata:
+        payload["extra_metadata"] = extra_metadata
+
+    np.savez_compressed(
+        output,
+        requested_ions=np.asarray(report.requested_ions, dtype="U"),
+        supported_ions=np.asarray(report.supported_ions, dtype="U"),
+        logte=np.asarray(report.logte, dtype=np.float64),
+        metadata_json=np.asarray(json.dumps(payload)),
+    )
+    return output
+
+
+def load_fiasco_ion_screening(path: str | Path) -> FiascoIonScreening:
+    """Load a persisted ion-screening report from a `.npz` artifact."""
+    with np.load(Path(path), allow_pickle=False) as data:
+        metadata = json.loads(str(data["metadata_json"]))
+        density = metadata["density"]
+        return FiascoIonScreening(
+            requested_ions=tuple(str(ion) for ion in data["requested_ions"].tolist()),
+            supported_ions=tuple(str(ion) for ion in data["supported_ions"].tolist()),
+            rejected_ions={str(key): str(value) for key, value in metadata.get("rejected_ions", {}).items()},
+            logte=np.asarray(data["logte"], dtype=np.float64),
+            density=u.Quantity(density["value"], u.Unit(density["unit"])),
+        )
 
 
 def screen_fiasco_ions_for_temperature_grid(

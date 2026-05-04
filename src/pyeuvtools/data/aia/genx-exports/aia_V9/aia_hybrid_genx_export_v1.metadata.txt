@@ -1,0 +1,13 @@
+format=pyeuvtools_aia_hybrid_genx_export
+format_version=1
+instrument=AIA
+generator=/Users/gelu/code/SUNCAST-ORG/pyEUVTools/scripts/idl/ExportAIAHybridGenx.pro
+generation_time_utc=Mon May  4 11:27:06 2026
+source_fullinst_file=/Users/gelu/ssw/sdo/aia/response/aia_V9_all_fullinst.genx
+source_fullemiss_file=/Users/gelu/ssw/sdo/aia/response/aia_V9_fullemiss.genx
+channels=A94,A131,A171,A193,A211,A304,A335
+emiss_units=photons cm3 s-1 sr-1 A-1
+abundfile=/ssw/packages/chianti/dbase/abundance/sun_coronal_1992_feldman_ext.abund
+ioneq_name=/ssw/packages/chianti/dbase/ioneq/chianti.ioneq
+emiss_version_name=9.0.1
+notes=Normalized hybrid export for pyEUVTools. Source .genx content flattened into a stable SAVE contract for Python loading.

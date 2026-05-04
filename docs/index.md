@@ -15,3 +15,6 @@ broader SunCAST Python ecosystem while remaining usable as a standalone library.
 
 The long-term design is intentionally broader than AIA. The package structure is
 meant to accommodate additional instruments and response builders in future work.
+
+Current implementation planning for the practical AIA hybrid route is documented
+in [hybrid_backend_design.md](hybrid_backend_design.md).

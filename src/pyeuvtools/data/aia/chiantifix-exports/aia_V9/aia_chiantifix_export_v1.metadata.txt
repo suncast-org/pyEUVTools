@@ -1,0 +1,10 @@
+format=pyeuvtools_aia_chiantifix_export
+format_version=1
+instrument=AIA
+version=aia_V9
+generator=/Users/gelu/code/SUNCAST-ORG/pyEUVTools/scripts/idl/ExportAIAChiantifix.pro
+generation_time_utc=Mon May  4 12:41:40 2026
+source_chiantifix_file=/Users/gelu/ssw/sdo/aia/response/aia_V9_chiantifix.genx
+channels=A94,A131,A171,A193,A211,A304,A335
+empirical_minus_raw_units=DN cm^5 s^-1 pix^-1
+notes=Python-readable export of the SSW chiantifix correction grid. Apply channel-wise and scale by the time-dependent AIA degradation factor before adding to the folded temperature response.

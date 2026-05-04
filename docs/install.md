@@ -2,9 +2,8 @@
 
 ## Stable release
 
-```bash
-pip install pyeuvtools
-```
+There is no public PyPI release yet. The first intended release is `0.1.0`, so
+current use should go through a development install from source.
 
 ## Development install
 
@@ -39,6 +38,10 @@ The readiness check now probes a representative ion for line datasets as well,
 so a partial or corrupt HDF5 database will not be reported as temperature-response
 ready just because `fiasco.list_ions()` succeeds. When that probe fails, the
 rebuild helper provides the supported recovery path for the configured local cache.
+
+For a backend-local status note describing what this prototype already covers,
+what was validated, and why active development was paused in favor of the hybrid
+genx-derived approach, see `src/pyeuvtools/response/README.md`.
 
 ## Notes
 

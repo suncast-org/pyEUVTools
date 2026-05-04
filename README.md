@@ -19,12 +19,13 @@ response tables on top of that foundation.
 
 ## Project Status
 
-`pyEUVTools` is currently **pre-alpha**. The repository is intentionally in a
-scaffold-and-implementation phase and is **not intended for a public PyPI release yet**.
+`pyEUVTools` is currently in a **local 0.1.0 release-preparation state**. The
+repository is still **not intended for a public PyPI release or tag until the
+final release go-ahead is given**.
 
-The planned first real release target is **0.1.0**, and that milestone should only
-be cut after the package provides a clearly usable AIA response API beyond the
-current thin wrapper layer.
+The first real release target is **0.1.0**. This local prep aligns the package
+metadata with that target, but it is still meant to be held until the release
+checklist is explicitly cleared.
 
 The concrete `0.1.0` release gate is documented in [docs/dev_workflow.md](docs/dev_workflow.md).
 In short, the first release must include a documented usable AIA API, validated
@@ -71,6 +72,32 @@ For the optional Python-native CHIANTI prototype backend:
 python -m pip install -e .[chianti]
 ```
 
+The `fiasco`/CHIANTI path is currently a provisional backend rather than the
+default production route. Installing the optional `chianti` extra is therefore
+not required for normal package use.
+
+## Contributor Artifact Policy
+
+This repository may ship committed reference artifacts for documentation,
+benchmark parity, and reviewable contributor refreshes, but ordinary user runs
+should not write into the clone by default.
+
+- User-generated benchmark outputs and hybrid exports default to user-local locations under `~/.pyeuvtools/` or a system temp directory fallback when `HOME` is unavailable.
+- Repo-local writes are intentional contributor actions and should use explicit paths such as `--artifact-dir benchmark-results/...` or IDL `outdir='benchmark-data/...'`.
+- The currently shipped runtime AIA V9 exports live under `src/pyeuvtools/data/aia/`.
+- The currently committed benchmark/provenance copy of the AIA V9 hybrid export remains at `benchmark-data/aia/genx-exports/aia_V9/aia_hybrid_genx_export_v1.sav`.
+
+For a backend-local note describing what this prototype already covers, what was
+validated, and why active development paused in favor of the hybrid
+genx-derived approach, see `src/pyeuvtools/response/README.md`.
+
+Default test runs also exclude the provisional CHIANTI backend tests. To run
+them explicitly:
+
+```bash
+python -m pytest -m chianti_backend
+```
+
 ## Quick Example
 
 ```python
@@ -97,19 +124,30 @@ published with GitHub Pages.
 - [API notes](docs/api.md)
 - [Dependency plan](docs/dependency_plan.md)
 - [Benchmark specification](docs/benchmark_spec.md)
+- [Hybrid backend design](docs/hybrid_backend_design.md)
 
 ## Versioning and Releases
 
 - Package versioning is managed with `bumpver`
-- PyPI publishing is disabled by default until the first usable AIA response API is implemented
+- PyPI publishing remains disabled locally until the final release approval is given
 - Zenodo metadata is tracked in `.zenodo.json` and intended to mint a DOI for releases
+- Release-facing API changes are summarized in `CHANGELOG.md`
+
+For this repository, Zenodo and PyPI are intentionally decoupled:
+
+- a GitHub release under `suncast-org/pyEUVTools` is the event intended for Zenodo archival
+- PyPI publishing is a separate manual GitHub Actions workflow and is not triggered automatically by a tag or GitHub release
+- the current Zenodo metadata credits Gelu M. Nita as the named software creator while explicitly acknowledging maintenance in the `suncast-org` GitHub organization
 
 ## Status
 
-This repository is the initial scaffold for the package. The AIA wavelength
-response wrapper is implemented, and the raw emissivity-folding step for AIA
-temperature responses is now available. The package is not yet considered ready
-for public release because the full `aia_get_response(/temperature, ...)`
-compatibility path, including empirical corrections and complete benchmark
-parity, is still in progress. **0.1.0** remains the target for the first real
-release.
+This repository now ships a usable compact AIA response API and the public GX
+bridge helper needed for downstream ComputeEUV packing. In particular, the
+Python `aia_get_response` wrapper covers compact `effective_area`,
+`emissivity`, and `temperature` responses with explicit non-interactive
+correction states: `raw`, `evenorm`, and `evenorm_chiantifix`.
+
+The local metadata now targets **0.1.0**, but the release is still intentionally
+held pending explicit approval. Remaining broader SSW surface coverage such as
+`full`, `all`, and `uv` stays documented as later-milestone work rather than as
+part of the compact `0.1.0` promise.

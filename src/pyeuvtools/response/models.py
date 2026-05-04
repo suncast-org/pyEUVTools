@@ -120,6 +120,79 @@ class FiascoIonScreening:
 
 
 @dataclass(frozen=True)
+class AIAHybridChannelExport:
+    """Normalized per-channel instrument data exported from AIA `.genx` products."""
+
+    channel: str
+    wavelength: u.Quantity
+    effective_area: u.Quantity
+    geometric_area: u.Quantity
+    plate_scale: u.Quantity
+    electron_per_dn: float
+    electron_per_ev: float
+    focal_plane_filter_efficiency: np.ndarray
+    entrance_filter_efficiency: np.ndarray
+    primary_mirror_reflectance: np.ndarray
+    secondary_mirror_reflectance: np.ndarray
+    quantum_efficiency_ccd: np.ndarray
+    ccd_contamination: np.ndarray
+    metadata: dict[str, str]
+
+
+@dataclass(frozen=True)
+class AIAHybridGenxExport:
+    """Normalized hybrid export assembled from AIA instrument and emissivity `.genx` files."""
+
+    format_name: str
+    format_version: int
+    instrument: str
+    channels: tuple[str, ...]
+    emissivity_logte: np.ndarray
+    emissivity_wavelength: u.Quantity
+    emissivity: u.Quantity
+    emissivity_metadata: dict[str, str]
+    channel_data: dict[str, AIAHybridChannelExport]
+    metadata: dict[str, str]
+
+
+@dataclass(frozen=True)
+class AIAEmissivityModel:
+    """Compact emissivity grid returned by the Python aia_get_response wrapper."""
+
+    instrument: str
+    source_file: str
+    logte: np.ndarray
+    wavelength: u.Quantity
+    emissivity: u.Quantity
+    metadata: dict[str, str]
+
+    def to_table(self) -> QTable:
+        """Export the emissivity grid as a quantity-aware table."""
+        table = QTable()
+        table["wavelength"] = self.wavelength
+        for index, logte in enumerate(self.logte):
+            table[f"emissivity_logte_{index}"] = self.emissivity[:, index]
+            table.meta[f"logte_{index}"] = float(logte)
+        table.meta["instrument"] = self.instrument
+        table.meta["source_file"] = self.source_file
+        table.meta.update(self.metadata)
+        return table
+
+
+@dataclass(frozen=True)
+class AIAChiantifixExport:
+    """Python-readable export of the SSW AIA chiantifix correction grid."""
+
+    instrument: str
+    version: str
+    channels: tuple[str, ...]
+    logte: np.ndarray
+    empirical_minus_raw: u.Quantity
+    source_file: str
+    metadata: dict[str, str]
+
+
+@dataclass(frozen=True)
 class IDLAIAResponse:
     """Normalized view of a GX-style AIA temperature-response structure."""
 

@@ -1,13 +1,15 @@
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
+import astropy.units as u
 import numpy as np
 import scipy.io as sio
 from astropy.time import Time
 
-from .aia import build_aia_temperature_response_set, build_aia_wavelength_response_set
-from .models import AIAIDLComparison, AIATemperatureIDLComparison, IDLAIAResponse
+from .aia import apply_aia_chiantifix, build_aia_temperature_response_set, build_aia_wavelength_response_set
+from .models import AIAIDLComparison, AIATemperatureIDLComparison, IDLAIAResponse, TemperatureResponseSet
 
 
 def _require_matplotlib_pyplot():
@@ -25,6 +27,11 @@ def _normalize_idl_aia_channel(channel: str) -> str:
     if value.startswith("A"):
         value = value[1:]
     return value
+
+
+def _default_aia_pixel_solid_angle() -> u.Quantity:
+    pixel_size_radians = (0.6 * u.arcsec).to_value(u.rad)
+    return (pixel_size_radians**2) * u.sr
 
 
 def canonical_aia_benchmark_path() -> Path:
@@ -175,8 +182,16 @@ def compare_aia_temperature_response_to_idl(
     emissivity_logte,
     emissivity,
     obstime: Time | str | None = None,
+    version: int | str | None = None,
+    respversion: str | Path | None = None,
     include_eve_correction: bool = False,
+    include_chiantifix: bool = False,
+    include_crosstalk: bool = True,
+    chiantifix_export: str | Path | None = None,
     correction_table=None,
+    instrument_file: str | Path | None = None,
+    response_root: str | Path | None = None,
+    calibration_version: int | None = None,
     platescale=None,
 ) -> AIATemperatureIDLComparison:
     """Compare a Python-built AIA temperature-response set against an IDL SAV fixture.
@@ -194,10 +209,24 @@ def compare_aia_temperature_response_to_idl(
         emissivity_logte=emissivity_logte,
         emissivity=emissivity,
         channels=normalized_idl_channels,
+        version=version,
+        respversion=respversion,
         include_eve_correction=include_eve_correction,
+        include_crosstalk=include_crosstalk,
         correction_table=correction_table,
-        platescale=1.0 if platescale is None else platescale,
+        instrument_file=instrument_file,
+        response_root=response_root,
+        calibration_version=calibration_version,
+        platescale=_default_aia_pixel_solid_angle() if platescale is None else platescale,
     )
+    if include_chiantifix:
+        python_response = apply_aia_chiantifix(
+            python_response,
+            version=version,
+            correction_table=correction_table,
+            calibration_version=calibration_version,
+            chiantifix_export=chiantifix_export,
+        )
     normalized_python_channels = tuple(str(channel) for channel in python_response.channels)
 
     required_metadata_fields = ("evenorm", "chiantifix")
@@ -260,6 +289,114 @@ def compare_aia_temperature_response_to_idl(
     )
 
 
+def save_aia_temperature_response_comparison_data(
+    comparison: AIATemperatureIDLComparison,
+    output_path: str | Path,
+    *,
+    extra_metadata: dict[str, object] | None = None,
+) -> Path:
+    """Persist a temperature-response comparison so plots can be regenerated cheaply."""
+    if comparison.abstraction_gap:
+        details = "; ".join(comparison.blocking_gaps)
+        raise ValueError(f"Cannot save comparison with unresolved blocking gaps: {details}")
+
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    channels = tuple(comparison.normalized_python_channels)
+    python_matrix = np.vstack(
+        [np.asarray(comparison.python_response.responses[channel].value, dtype=np.float64) for channel in channels]
+    )
+    payload = {
+        "idl_instrument": comparison.idl_response.instrument,
+        "idl_source": comparison.idl_response.source,
+        "idl_metadata": comparison.idl_response.metadata,
+        "python_instrument": comparison.python_response.instrument,
+        "python_obstime": None
+        if comparison.python_response.obstime is None
+        else comparison.python_response.obstime.isot,
+        "include_eve_correction": comparison.python_response.include_eve_correction,
+    }
+    if extra_metadata:
+        payload["extra_metadata"] = extra_metadata
+
+    np.savez_compressed(
+        output,
+        idl_channels=np.asarray(comparison.idl_response.channels, dtype="U"),
+        normalized_idl_channels=np.asarray(comparison.normalized_idl_channels, dtype="U"),
+        normalized_python_channels=np.asarray(channels, dtype="U"),
+        logte=np.asarray(comparison.idl_response.logte, dtype=np.float64),
+        idl_response=np.asarray(comparison.idl_response.all_response, dtype=np.float64),
+        python_response=python_matrix,
+        max_absolute_difference=np.asarray(
+            [comparison.max_absolute_difference[channel] for channel in channels], dtype=np.float64
+        ),
+        max_relative_difference=np.asarray(
+            [
+                np.nan if comparison.max_relative_difference[channel] is None else comparison.max_relative_difference[channel]
+                for channel in channels
+            ],
+            dtype=np.float64,
+        ),
+        metadata_json=np.asarray(json.dumps(payload)),
+    )
+    return output
+
+
+def load_aia_temperature_response_comparison_data(path: str | Path) -> AIATemperatureIDLComparison:
+    """Load a persisted temperature-response comparison from a `.npz` artifact."""
+    with np.load(Path(path), allow_pickle=False) as data:
+        metadata = json.loads(str(data["metadata_json"]))
+        normalized_python_channels = tuple(str(channel) for channel in data["normalized_python_channels"].tolist())
+        logte = np.asarray(data["logte"], dtype=np.float64)
+        python_matrix = np.asarray(data["python_response"], dtype=np.float64)
+        max_relative_values = np.asarray(data["max_relative_difference"], dtype=np.float64)
+        python_obstime_raw = metadata.get("python_obstime")
+
+        python_response = TemperatureResponseSet(
+            instrument=str(metadata["python_instrument"]),
+            obstime=None if python_obstime_raw is None else Time(str(python_obstime_raw)),
+            channels=normalized_python_channels,
+            logte=logte,
+            responses={
+                channel: u.Quantity(python_matrix[index], u.dimensionless_unscaled)
+                for index, channel in enumerate(normalized_python_channels)
+            },
+            include_eve_correction=bool(metadata.get("include_eve_correction", False)),
+        )
+        idl_response = IDLAIAResponse(
+            instrument=str(metadata["idl_instrument"]),
+            channels=tuple(str(channel) for channel in data["idl_channels"].tolist()),
+            logte=logte,
+            all_response=np.asarray(data["idl_response"], dtype=np.float64),
+            ds=None,
+            source=str(metadata["idl_source"]),
+            metadata={str(key): str(value) for key, value in dict(metadata.get("idl_metadata", {})).items()},
+        )
+
+        return AIATemperatureIDLComparison(
+            idl_response=idl_response,
+            python_response=python_response,
+            normalized_idl_channels=tuple(str(channel) for channel in data["normalized_idl_channels"].tolist()),
+            normalized_python_channels=normalized_python_channels,
+            instrument_match=idl_response.instrument == python_response.instrument.upper(),
+            channel_match=tuple(str(channel) for channel in data["normalized_idl_channels"].tolist())
+            == normalized_python_channels,
+            logte_match=True,
+            idl_temperature_shape=tuple(np.asarray(data["idl_response"], dtype=np.float64).shape),
+            python_temperature_shape=tuple(python_matrix.shape),
+            missing_idl_metadata_fields=(),
+            blocking_gaps=(),
+            max_absolute_difference={
+                channel: float(np.asarray(data["max_absolute_difference"], dtype=np.float64)[index])
+                for index, channel in enumerate(normalized_python_channels)
+            },
+            max_relative_difference={
+                channel: None if np.isnan(max_relative_values[index]) else float(max_relative_values[index])
+                for index, channel in enumerate(normalized_python_channels)
+            },
+        )
+
+
 def plot_aia_temperature_response_comparison(
     comparison: AIATemperatureIDLComparison,
     output_path: str | Path,
@@ -278,39 +415,71 @@ def plot_aia_temperature_response_comparison(
     idl_matrix = np.asarray(comparison.idl_response.all_response, dtype=np.float64)
     logte = np.asarray(comparison.idl_response.logte, dtype=np.float64)
     channel_count = len(comparison.normalized_idl_channels)
-    ncols = 2
-    nrows = int(np.ceil(channel_count / ncols))
-    figure, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(12, 3.2 * nrows), sharex=True)
-    axes_array = np.atleast_1d(axes).reshape(-1)
+    figure, axes = plt.subplots(
+        nrows=channel_count,
+        ncols=2,
+        figsize=(13, 3.0 * channel_count),
+        sharex=True,
+        squeeze=False,
+        gridspec_kw={"width_ratios": (1.45, 1.0)},
+    )
 
     for index, channel in enumerate(comparison.normalized_python_channels):
-        axis = axes_array[index]
+        response_axis = axes[index, 0]
+        ratio_axis = axes[index, 1]
         python_values = np.asarray(comparison.python_response.responses[channel].value, dtype=np.float64)
         idl_values = idl_matrix[index]
         idl_plot = np.where(idl_values > 0.0, idl_values, np.nan)
         python_plot = np.where(python_values > 0.0, python_values, np.nan)
-        axis.plot(logte, idl_plot, label="IDL", color="black", linewidth=1.8)
-        axis.plot(logte, python_plot, label="pyEUVTools", color="#d95f02", linewidth=1.5, linestyle="--")
-        axis.set_yscale("log")
-        axis.set_title(
-            f"AIA {channel}  max rel={comparison.max_relative_difference[channel]:.2e}",
+        response_axis.plot(logte, idl_plot, label="IDL", color="black", linewidth=1.8)
+        response_axis.plot(
+            logte,
+            python_plot,
+            label="pyEUVTools",
+            color="#d95f02",
+            linewidth=1.5,
+            linestyle="--",
+        )
+        response_axis.set_yscale("log")
+        response_axis.set_title(
+            f"AIA {channel} response",
             fontsize=10,
         )
-        axis.grid(True, which="both", alpha=0.25)
-        axis.set_xlabel("log10(T / K)")
-        axis.set_ylabel("Response")
+        response_axis.grid(True, which="both", alpha=0.25)
+        response_axis.set_xlabel("log10(T / K)")
+        response_axis.set_ylabel("Response")
 
-    for axis in axes_array[channel_count:]:
-        axis.axis("off")
+        valid_ratio = (idl_values > 0.0) & (python_values > 0.0)
+        ratio_curve = np.full_like(idl_values, np.nan, dtype=np.float64)
+        ratio_curve[valid_ratio] = np.log10(python_values[valid_ratio] / idl_values[valid_ratio])
+        ratio_axis.plot(logte, ratio_curve, color="#1b9e77", linewidth=1.5)
+        ratio_axis.axhline(0.0, color="0.25", linewidth=1.0, linestyle=":")
+        ratio_axis.grid(True, which="both", alpha=0.25)
+        ratio_axis.set_xlabel("log10(T / K)")
+        ratio_axis.set_ylabel("log10(py / IDL)")
 
-    handles, labels = axes_array[0].get_legend_handles_labels()
-    figure.legend(handles, labels, loc="upper center", ncol=2, frameon=False)
+        finite_ratio = ratio_curve[np.isfinite(ratio_curve)]
+        if finite_ratio.size:
+            limit = max(0.25, float(np.max(np.abs(finite_ratio))) * 1.1)
+            ratio_axis.set_ylim(-limit, limit)
+        ratio_axis.set_title(
+            "max abs={abs_diff:.2e}  max rel={rel_diff:.2e}".format(
+                abs_diff=comparison.max_absolute_difference[channel],
+                rel_diff=0.0
+                if comparison.max_relative_difference[channel] is None
+                else comparison.max_relative_difference[channel],
+            ),
+            fontsize=10,
+        )
+
+    handles, labels = axes[0, 0].get_legend_handles_labels()
+    figure.legend(handles, labels, loc="upper center", bbox_to_anchor=(0.5, 0.965), ncol=2, frameon=False)
     figure.suptitle(
         figure_title or "AIA Temperature Response Comparison: IDL vs pyEUVTools",
         fontsize=14,
-        y=0.995,
+        y=0.992,
     )
-    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.97))
+    figure.tight_layout(rect=(0.0, 0.0, 1.0, 0.93))
     figure.savefig(output, dpi=180)
     plt.close(figure)
     return output

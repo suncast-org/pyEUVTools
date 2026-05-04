@@ -213,6 +213,12 @@ Because the canonical AIA benchmark fixture is small, it is reasonable to vendor
 benchmark artifacts directly in `pyEUVTools` for reproducible testing, as long
 as provenance and checksums are tracked alongside them.
 
+Generated comparison outputs, caches, timing logs, and benchmark summaries are
+not part of that canonical benchmark-data contract. Those derived workflow
+artifacts should live under backend-specific directories in `benchmark-results/`
+so preserved `fiasco` reference runs and later hybrid runs do not overwrite one
+another by default.
+
 The initial vendored raw baseline checksum is tracked alongside the artifact in:
 
 - `benchmark-data/aia/20251126T153431/aia_raw_response_20251126T153431_raw.sha256`

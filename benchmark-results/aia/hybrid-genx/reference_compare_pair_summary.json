@@ -1,0 +1,23 @@
+{
+  "backend_label": "hybrid-genx",
+  "raw_artifact_dir": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-raw-reference/hybrid_raw_compare",
+  "corrected_artifact_dir": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-evenorm-chiantifix-reference/hybrid_raw_compare",
+  "steps": [
+    {
+      "name": "raw_reference",
+      "elapsed_seconds": 7.109182625019457,
+      "returncode": 0
+    },
+    {
+      "name": "evenorm_chiantifix_reference",
+      "elapsed_seconds": 6.1982554999995045,
+      "returncode": 0
+    }
+  ],
+  "artifacts": {
+    "raw_data": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-raw-reference/hybrid_raw_compare/aia_hybrid_raw_compare_data.npz",
+    "raw_plot": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-raw-reference/hybrid_raw_compare/aia_hybrid_raw_compare.png",
+    "corrected_data": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-evenorm-chiantifix-reference/hybrid_raw_compare/aia_hybrid_raw_compare_data.npz",
+    "corrected_plot": "/Users/gelu/code/SUNCAST-ORG/pyEUVTools/benchmark-results/aia/hybrid-genx/2026-05-04-evenorm-chiantifix-reference/hybrid_raw_compare/aia_hybrid_raw_compare.png"
+  }
+}
