@@ -4,6 +4,7 @@
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.12-blue?logo=python)](https://www.python.org/)
 [![PyPI](https://img.shields.io/pypi/v/pyeuvtools.svg?logo=pypi&logoColor=white)](https://pypi.org/project/pyeuvtools/)
 [![Docs](https://img.shields.io/badge/docs-mkdocs-1f6feb.svg)](https://suncast-org.github.io/pyEUVTools/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20029729.svg)](https://doi.org/10.5281/zenodo.20029729)
 
 ## Overview
 
@@ -21,11 +22,9 @@ response tables on top of that foundation.
 
 ## Project Status
 
-`pyEUVTools` **0.1.0** is publicly released on PyPI and tagged on GitHub.
+`pyEUVTools` is publicly released on PyPI and archived from GitHub releases by Zenodo.
 
-The next patch release, **0.1.1**, is reserved for publication-metadata cleanup
-so the PyPI long description and Zenodo archival path match the live release
-state.
+Zenodo concept DOI: [10.5281/zenodo.20029729](https://doi.org/10.5281/zenodo.20029729)
 
 The concrete `0.1.0` release gate is documented in [docs/dev_workflow.md](docs/dev_workflow.md).
 In short, the first release must include a documented usable AIA API, validated

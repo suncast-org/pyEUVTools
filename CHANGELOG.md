@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.2 - README Status Correction
+
+### Changed
+
+- The README project-status section now reflects the live release state without
+  version-specific future-tense wording that would go stale on PyPI.
+- The README now includes the Zenodo concept DOI badge and stable DOI link for
+  citation and archival discovery.
+
 ## 0.1.1 - Release Metadata Cleanup
 
 ### Changed
