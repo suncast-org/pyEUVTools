@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.1.0 - Pending Release Approval
+## 0.1.1 - Release Metadata Cleanup
+
+### Changed
+
+- The published project metadata now reflects that `0.1.0` was already released
+  on PyPI and GitHub rather than still being in a local pre-release state.
+- The README now advertises the live PyPI package and hosted documentation with
+  release-facing badges.
+- Zenodo and citation metadata now target the `0.1.1` follow-up patch release.
+
+## 0.1.0 - Released
 
 ### Changed
 
@@ -23,7 +33,6 @@
 
 ### Packaging
 
-- Local release metadata now targets `0.1.0` while remaining intentionally
-  unpublished until final approval.
-- The release metadata now explicitly acknowledges the `suncast-org` GitHub
+- First public release of `pyEUVTools` on PyPI and GitHub.
+- The release metadata explicitly acknowledges the `suncast-org` GitHub
   organization in the Zenodo-facing project description and notes.

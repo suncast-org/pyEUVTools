@@ -2,6 +2,8 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-%E2%89%A53.12-blue?logo=python)](https://www.python.org/)
+[![PyPI](https://img.shields.io/pypi/v/pyeuvtools.svg?logo=pypi&logoColor=white)](https://pypi.org/project/pyeuvtools/)
+[![Docs](https://img.shields.io/badge/docs-mkdocs-1f6feb.svg)](https://suncast-org.github.io/pyEUVTools/)
 
 ## Overview
 
@@ -19,13 +21,11 @@ response tables on top of that foundation.
 
 ## Project Status
 
-`pyEUVTools` is currently in a **local 0.1.0 release-preparation state**. The
-repository is still **not intended for a public PyPI release or tag until the
-final release go-ahead is given**.
+`pyEUVTools` **0.1.0** is publicly released on PyPI and tagged on GitHub.
 
-The first real release target is **0.1.0**. This local prep aligns the package
-metadata with that target, but it is still meant to be held until the release
-checklist is explicitly cleared.
+The next patch release, **0.1.1**, is reserved for publication-metadata cleanup
+so the PyPI long description and Zenodo archival path match the live release
+state.
 
 The concrete `0.1.0` release gate is documented in [docs/dev_workflow.md](docs/dev_workflow.md).
 In short, the first release must include a documented usable AIA API, validated
@@ -50,7 +50,13 @@ for the shipped public surface.
 
 ## Installation
 
-There is no public PyPI release yet. Use a development install:
+Install the published package from PyPI:
+
+```bash
+python -m pip install pyeuvtools
+```
+
+For local development, use an editable install:
 
 ```bash
 git clone https://github.com/suncast-org/pyEUVTools.git

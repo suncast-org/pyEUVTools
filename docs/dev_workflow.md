@@ -15,10 +15,10 @@ bumpver update --minor
 bumpver update --major
 ```
 
-The local release-preparation version is `0.1.0`, but it should not be tagged or
-published until the final release go-ahead is given. The first real public
-release target remains `0.1.0`, and it should only be cut after the package
-exposes a genuinely usable AIA response API.
+Version `0.1.0` is the first public release and is already published on PyPI and
+tagged on GitHub. The next follow-up patch release is `0.1.1`, reserved for
+publication-metadata cleanup and Zenodo re-triggering after the repository was
+enabled in the Zenodo GitHub integration.
 
 ## First Release Criteria
 
@@ -101,9 +101,8 @@ Build locally with:
 python -m build
 ```
 
-PyPI publishing is intentionally disabled as a default release path while the
-repository remains in scaffold mode. The publish workflow is manual-only and
-includes a guard against publishing the placeholder scaffold version.
+PyPI publishing is manual-only through the release workflow. Creating a GitHub
+tag or release does not by itself publish to PyPI.
 
 ## Zenodo
 
@@ -115,3 +114,7 @@ PyPI publication is separate from Zenodo archival in this repository. The
 does not by itself publish to PyPI. The current release metadata credits Gelu
 M. Nita as the named software creator and acknowledges the `suncast-org`
 repository as the project home.
+
+If Zenodo was enabled after a GitHub release was already published, Zenodo may
+miss that earlier release event. In that case, publish the next patch release
+normally and let Zenodo archive the new `v*` release through its GitHub webhook.
