@@ -644,15 +644,15 @@ def build_aia_wavelength_response(
         ``Channel.wavelength_response``. When omitted, a version-like
         ``respversion`` or ``version`` value is used before falling back to 10.
     """
-    Channel, get_correction_table = _require_aiapy()
     channel_label = _normalize_aia_channel(channel)
+    Channel, get_correction_table = _require_aiapy()
     obstime_obj = _normalize_obstime(obstime)
     resolved_calibration_version = _resolve_calibration_version(
         calibration_version,
         version=version,
         respversion=respversion,
     )
-    if correction_table is None:
+    if correction_table is None and (include_eve_correction or respversion is not None):
         correction_table = _resolve_correction_table(
             correction_table,
             respversion=respversion,
@@ -699,11 +699,12 @@ def build_aia_wavelength_response_set(
 ) -> WavelengthResponseSet:
     """Build wavelength responses for a set of AIA EUV channels."""
     obstime_obj = _normalize_obstime(obstime)
-    correction_table = _resolve_correction_table(
-        correction_table,
-        respversion=respversion,
-        response_root=response_root,
-    )
+    if correction_table is None and (include_eve_correction or respversion is not None):
+        correction_table = _resolve_correction_table(
+            correction_table,
+            respversion=respversion,
+            response_root=response_root,
+        )
     labels: list[str] = []
     response_map = {}
     wavelength_grid = None
@@ -987,11 +988,12 @@ def build_aia_temperature_response_set(
 ) -> TemperatureResponseSet:
     """Fold an emissivity grid through a set of AIA wavelength responses."""
     obstime_obj = _normalize_obstime(obstime)
-    correction_table = _resolve_correction_table(
-        correction_table,
-        respversion=respversion,
-        response_root=response_root,
-    )
+    if correction_table is None and (include_eve_correction or respversion is not None):
+        correction_table = _resolve_correction_table(
+            correction_table,
+            respversion=respversion,
+            response_root=response_root,
+        )
     labels: list[str] = []
     response_map = {}
     for channel in channels:
