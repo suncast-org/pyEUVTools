@@ -200,8 +200,9 @@ def test_aia_get_response_rejects_evenorm_chiantifix_for_area() -> None:
 
 
 def test_aia_get_response_rejects_legacy_chiantifix_only_request() -> None:
-    with pytest.raises(ValueError, match="evenorm_chiantifix"):
-        aia.aia_get_response(temperature=True, chiantifix=1)
+    with pytest.warns(DeprecationWarning, match="evenorm=.*chiantifix="):
+        with pytest.raises(ValueError, match="evenorm_chiantifix"):
+            aia.aia_get_response(temperature=True, chiantifix=1)
 
 
 def test_aia_get_response_rejects_mixed_correction_interfaces() -> None:
