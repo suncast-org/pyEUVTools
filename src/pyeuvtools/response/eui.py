@@ -233,7 +233,7 @@ def build_eui_temperature_response_idl_view(
         channels=(EUI_CHANNEL_IDL,),
         logte=np.asarray(response_set.logte, dtype=np.float64),
         all_response=np.asarray([response_set.responses[EUI_CHANNEL].value], dtype=np.float64),
-        ds=_EUI_PIXEL_ARCSEC[det],
+        ds=_EUI_PIXEL_ARCSEC[det] ** 2,
         source="python-generated",
         metadata=response_metadata,
     )
@@ -337,7 +337,8 @@ def build_eui_temperature_response_gx_payload(
         "detector": response.metadata.get("detector", detector),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.eui.build_eui_temperature_response_gx_payload",
-        "ds_arcsec": float(response.ds),
+        "pixel_arcsec": float(response.metadata["pixel_arcsec"]),
+        "ds_arcsec2": float(response.ds),
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata

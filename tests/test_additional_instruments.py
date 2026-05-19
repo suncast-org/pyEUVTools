@@ -57,13 +57,15 @@ def test_build_eui_temperature_response_gx_payload_uses_hybrid_emissivity(monkey
 
     assert payload.shape == (1,)
     assert payload_dtype.names == ("ds", "NT", "Nchannels", "logte", "all")
-    assert payload["ds"][0] == pytest.approx(4.4401245)
+    assert payload["ds"][0] == pytest.approx(4.4401245**2)
     assert int(payload["NT"][0]) == 2
     assert int(payload["Nchannels"][0]) == 1
     assert payload["all"][0].shape == (1, 2)
     assert meta["instrument"] == "EUI/FSI"
     assert meta["channels"] == ("A174",)
     assert meta["detector"] == "fsi"
+    assert meta["pixel_arcsec"] == pytest.approx(4.4401245)
+    assert meta["ds_arcsec2"] == pytest.approx(4.4401245**2)
 
 
 def test_load_sxt_temperature_response_matches_static_gx_shape_and_channels() -> None:
@@ -73,7 +75,7 @@ def test_load_sxt_temperature_response_matches_static_gx_shape_and_channels() ->
     assert response.channels == ("A12", "A13")
     assert response.logte.shape == (251,)
     assert response.all_response.shape == (2, 251)
-    assert response.ds == pytest.approx(2.45)
+    assert response.ds == pytest.approx(2.45**2)
     assert response.metadata["time_dependent"] == "NO"
     assert response.metadata["obs_time"] == "2025-11-26T15:34:31.000"
 
@@ -82,11 +84,13 @@ def test_build_sxt_temperature_response_gx_payload_uses_static_response() -> Non
     payload, payload_dtype, meta = sxt.build_sxt_temperature_response_gx_payload()
 
     assert payload_dtype.names == ("ds", "NT", "Nchannels", "logte", "all")
-    assert payload["ds"][0] == pytest.approx(2.45)
+    assert payload["ds"][0] == pytest.approx(2.45**2)
     assert int(payload["NT"][0]) == 251
     assert int(payload["Nchannels"][0]) == 2
     assert payload["all"][0].shape == (2, 251)
     assert meta["channels"] == ("A12", "A13")
+    assert meta["pixel_arcsec"] == pytest.approx(2.45)
+    assert meta["ds_arcsec2"] == pytest.approx(2.45**2)
 
 
 def test_load_trace_temperature_response_matches_static_gx_shape_and_channels() -> None:
@@ -109,3 +113,5 @@ def test_build_trace_temperature_response_gx_payload_uses_static_response() -> N
     assert int(payload["Nchannels"][0]) == 3
     assert payload["all"][0].shape == (3, 150)
     assert meta["channels"] == ("171oa", "195oa", "284oa")
+    assert meta["pixel_arcsec"] == pytest.approx(1.0)
+    assert meta["ds_arcsec2"] == pytest.approx(1.0)

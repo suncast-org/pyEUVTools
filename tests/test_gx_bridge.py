@@ -50,3 +50,5 @@ def test_build_aia_temperature_response_gx_payload_returns_computeeuv_shape(monk
     assert meta["correction_state"] == "evenorm_chiantifix"
     assert meta["response_units"] == "cm5 DN / s"
     assert meta["source"] == "pyeuvtools.response.aia.build_aia_temperature_response_gx_payload"
+    assert meta["pixel_arcsec"] == pytest.approx(0.6)
+    assert meta["ds_arcsec2"] == pytest.approx(0.36)

@@ -143,7 +143,7 @@ def test_build_euvi_temperature_response_gx_payload_uses_hybrid_emissivity(monke
 
     assert payload.shape == (1,)
     assert payload_dtype.names == ("ds", "NT", "Nchannels", "logte", "all")
-    assert payload["ds"][0] == pytest.approx(1.59)
+    assert payload["ds"][0] == pytest.approx(1.59**2)
     assert int(payload["NT"][0]) == 2
     assert int(payload["Nchannels"][0]) == 1
     assert payload["all"][0].shape == (1, 2)
@@ -151,4 +151,6 @@ def test_build_euvi_temperature_response_gx_payload_uses_hybrid_emissivity(monke
     assert meta["channels"] == ("A171",)
     assert meta["filter"] == "S1"
     assert meta["source"] == "pyeuvtools.response.euvi.build_euvi_temperature_response_gx_payload"
+    assert meta["pixel_arcsec"] == pytest.approx(1.59)
+    assert meta["ds_arcsec2"] == pytest.approx(1.59**2)
     assert meta["idl_view_metadata"]["time_dependent"] == "NO"

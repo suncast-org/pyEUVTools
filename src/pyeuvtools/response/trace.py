@@ -131,7 +131,8 @@ def build_trace_temperature_response_gx_payload(
         "channels": tuple(response.channels),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.trace.build_trace_temperature_response_gx_payload",
-        "ds_arcsec": float(response.ds),
+        "pixel_arcsec": TRACE_PIXEL_ARCSEC,
+        "ds_arcsec2": float(response.ds),
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata

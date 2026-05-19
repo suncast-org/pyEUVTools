@@ -12,13 +12,15 @@
 - Public exports and documentation for the new static instrument modules.
 - Unit coverage for packaged response-file resolution, static payload shape,
   channel labels, pixel scales, and EUI hybrid-emissivity folding.
+- GX payload `ds` values now follow the ComputeEUV convention of response
+  pixel area in arcsec^2, with linear pixel scale reported separately as
+  `pixel_arcsec` metadata.
 
 ### Notes
 
 - This is a `0.2.0` feature release because it adds multiple public instrument
   response modules. It is not yet a `1.0.0` release: several response paths are
-  intentionally static, broader SSW branches remain out of scope, and downstream
-  fixture conventions such as `ds` are still being aligned.
+  intentionally static and broader SSW branches remain out of scope.
 
 ## 0.1.3 - Static STEREO/EUVI Response Builder
 

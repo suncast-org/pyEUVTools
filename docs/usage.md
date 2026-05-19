@@ -124,6 +124,10 @@ the already-folded static GX response structures directly. These helpers return
 the same `ds`, `NT`, `Nchannels`, `logte`, and `all` structured-array layout as
 the AIA and EUVI payload builders.
 
+In all GX payloads, `ds` is the response pixel area in arcsec^2, matching the
+ComputeEUV convention. The linear instrument pixel scale is available in
+metadata as `pixel_arcsec`.
+
 ## Generate and quick-plot from the exposed API
 
 To generate a compact AIA response artifact through the public

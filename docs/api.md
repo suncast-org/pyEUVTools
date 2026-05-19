@@ -83,7 +83,8 @@ For downstream GX integration, the intended public bridge is
 - a length-1 structured NumPy array ready for direct downstream packing
 - the exact dtype used to build that array
 - a lightweight metadata dictionary carrying instrument, channels,
-  `correction_state`, `response_units`, the chosen `ds_arcsec`, and the nested
+  `correction_state`, `response_units`, the chosen response pixel area
+  `ds_arcsec2`, and the nested
   normalized IDL-view metadata
 
 This keeps the response-construction logic in `pyEUVTools` while avoiding a hard
@@ -122,6 +123,9 @@ For downstream GX integration, the intended public bridge is
 high-level triple as the AIA bridge: a length-1 structured NumPy payload, the
 dtype used to build it, and metadata describing the instrument, spacecraft,
 channels, response units, pixel scale, and normalized IDL-style view.
+The payload `ds` field follows the ComputeEUV/GX convention and stores response
+pixel area in arcsec^2; the linear pixel scale is retained separately as
+`pixel_arcsec` metadata.
 
 ## EUI module
 

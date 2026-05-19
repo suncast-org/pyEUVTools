@@ -97,7 +97,7 @@ def load_sxt_temperature_response_idl_view(
         channels=channels,
         logte=np.asarray(item[field_map["LOGTE"]], dtype=np.float64),
         all_response=np.asarray(item[field_map["ALL"]], dtype=np.float64),
-        ds=SXT_PIXEL_ARCSEC,
+        ds=SXT_PIXEL_ARCSEC**2,
         source=str(source),
         metadata=response_metadata,
     )
@@ -139,7 +139,8 @@ def build_sxt_temperature_response_gx_payload(
         "channels": tuple(response.channels),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.sxt.build_sxt_temperature_response_gx_payload",
-        "ds_arcsec": float(response.ds),
+        "pixel_arcsec": SXT_PIXEL_ARCSEC,
+        "ds_arcsec2": float(response.ds),
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata

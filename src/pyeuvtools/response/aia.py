@@ -1129,7 +1129,8 @@ def build_aia_temperature_response_gx_payload(
     include_chiantifix: bool = False,
     chiantifix_export: str | Path | AIAChiantifixExport | None = None,
     metadata: dict[str, str] | None = None,
-    ds_arcsec: float = _GX_AIA_DS_ARCSEC,
+    ds_arcsec2: float = _GX_AIA_DS_ARCSEC,
+    ds_arcsec: float | None = None,
 ) -> tuple[np.ndarray, np.dtype, dict[str, object]]:
     """Build a ComputeEUV-compatible AIA temperature-response payload.
 
@@ -1157,6 +1158,7 @@ def build_aia_temperature_response_gx_payload(
         metadata=metadata,
     )
 
+    ds_value = float(ds_arcsec2 if ds_arcsec is None else ds_arcsec)
     nt = int(response.logte.size)
     nchan = int(len(response.channels))
     response_dtype = np.dtype(
@@ -1169,7 +1171,7 @@ def build_aia_temperature_response_gx_payload(
         ]
     )
     payload = np.zeros(1, dtype=response_dtype)
-    payload["ds"] = float(ds_arcsec)
+    payload["ds"] = ds_value
     payload["NT"] = nt
     payload["Nchannels"] = nchan
     payload["logte"] = np.asarray(response.logte, dtype=np.float64)
@@ -1181,7 +1183,8 @@ def build_aia_temperature_response_gx_payload(
         "correction_state": response.metadata.get("correction_state", "raw"),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.aia.build_aia_temperature_response_gx_payload",
-        "ds_arcsec": float(ds_arcsec),
+        "pixel_arcsec": 0.6,
+        "ds_arcsec2": ds_value,
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata
