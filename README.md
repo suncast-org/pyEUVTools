@@ -15,10 +15,8 @@ The project is designed to become a reusable response-function layer for the
 broader SunCAST Python ecosystem, including packages such as `pyCHMP` and
 `pyGXrender`, while remaining usable as a standalone scientific library.
 
-The first backend focus is **SDO/AIA**. The immediate goal is to provide a clean
-Python interface to the time-dependent AIA instrument response machinery already
-available through `aiapy`, and then build toward GX-compatible temperature
-response tables on top of that foundation.
+The first backend focus is **SDO/AIA**. The package now also includes a static
+**STEREO/EUVI** temperature-response builder for GX-compatible downstream use.
 
 ## Project Status
 
@@ -35,6 +33,7 @@ for the shipped public surface.
 
 - AIA wavelength-response wrappers powered by `aiapy`
 - raw AIA temperature-response folding equivalent to the numerical step in SSW `aia_bp_make_tresp.pro`
+- static STEREO/EUVI temperature-response payloads for Ahead and Behind, using packaged SRA calibration files and the same AIA hybrid emissivity grid used by the AIA path
 - optional `fiasco` backend introspection and database bootstrap helpers for Python-native CHIANTI access
 - IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
 - canonical benchmark planning for raw IDL AIA temperature-response fixtures with full provenance
@@ -43,9 +42,8 @@ for the shipped public surface.
 
 ## Planned Scope
 
-- AIA temperature-response builder compatible with GX-style response tables
 - export/import helpers for GX-compatible response structures
-- support for additional instruments such as TRACE, EUVI, EUI, and SXT
+- support for additional instruments such as TRACE, EUI, and SXT
 
 ## Installation
 
@@ -90,6 +88,7 @@ should not write into the clone by default.
 - User-generated benchmark outputs and hybrid exports default to user-local locations under `~/.pyeuvtools/` or a system temp directory fallback when `HOME` is unavailable.
 - Repo-local writes are intentional contributor actions and should use explicit paths such as `--artifact-dir benchmark-results/...` or IDL `outdir='benchmark-data/...'`.
 - The currently shipped runtime AIA V9 exports live under `src/pyeuvtools/data/aia/`.
+- The currently shipped EUVI SRA calibration files live under `src/pyeuvtools/data/euvi/sra/`.
 - The currently committed benchmark/provenance copy of the AIA V9 hybrid export remains at `benchmark-data/aia/genx-exports/aia_V9/aia_hybrid_genx_export_v1.sav`.
 
 For a backend-local note describing what this prototype already covers, what was
@@ -146,11 +145,11 @@ For this repository, Zenodo and PyPI are intentionally decoupled:
 
 ## Status
 
-This repository now ships a usable compact AIA response API and the public GX
-bridge helper needed for downstream ComputeEUV packing. In particular, the
-Python `aia_get_response` wrapper covers compact `effective_area`,
-`emissivity`, and `temperature` responses with explicit non-interactive
-correction states: `raw`, `evenorm`, and `evenorm_chiantifix`.
+This repository now ships a usable compact AIA response API, static STEREO/EUVI
+temperature responses, and public GX bridge helpers needed for downstream
+ComputeEUV packing. In particular, the Python `aia_get_response` wrapper covers
+compact `effective_area`, `emissivity`, and `temperature` responses with explicit
+non-interactive correction states: `raw`, `evenorm`, and `evenorm_chiantifix`.
 
 The local metadata now targets **0.1.0**, but the release is still intentionally
 held pending explicit approval. Remaining broader SSW surface coverage such as

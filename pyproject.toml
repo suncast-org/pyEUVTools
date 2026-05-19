@@ -69,6 +69,7 @@ include = ["pyeuvtools", "pyeuvtools.*"]
 "pyeuvtools" = [
   "data/**/*.sav",
   "data/**/*.txt",
+  "data/**/*.geny",
 ]
 
 [tool.pytest.ini_options]

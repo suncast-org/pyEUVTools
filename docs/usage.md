@@ -74,6 +74,29 @@ The legacy `evenorm=` and `chiantifix=` keywords remain as a temporary
 compatibility layer, but they are deprecated and `chiantifix`-only requests are
 rejected rather than silently coerced.
 
+## Static STEREO/EUVI GX payload
+
+```python
+from pyeuvtools.response import build_euvi_temperature_response_gx_payload
+
+payload, payload_dtype, meta = build_euvi_temperature_response_gx_payload(
+	spacecraft="ahead",
+	obstime="2025-11-26T15:34:31",
+)
+
+print(meta["instrument"])
+print(meta["channels"])
+print(payload_dtype.names)
+print(payload["all"][0].shape)
+```
+
+The current EUVI path matches the static GX Simulator implementation. It uses
+the packaged Ahead or Behind SRA calibration file, the S1 filter, the standard
+171, 195, 284, and 304 A channels, and the packaged AIA hybrid emissivity grid.
+The `obstime` argument is accepted for future time-dependent degradation support,
+but it is not used by the current static calculation. Ephemeris and roll
+metadata are deliberately left to caller-side geometry code.
+
 ## Generate and quick-plot from the exposed API
 
 To generate a compact AIA response artifact through the public
