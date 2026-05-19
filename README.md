@@ -151,7 +151,6 @@ ComputeEUV packing. In particular, the Python `aia_get_response` wrapper covers
 compact `effective_area`, `emissivity`, and `temperature` responses with explicit
 non-interactive correction states: `raw`, `evenorm`, and `evenorm_chiantifix`.
 
-The local metadata now targets **0.1.0**, but the release is still intentionally
-held pending explicit approval. Remaining broader SSW surface coverage such as
+The local metadata now targets **0.1.3**. Remaining broader SSW surface coverage such as
 `full`, `all`, and `uv` stays documented as later-milestone work rather than as
-part of the compact `0.1.0` promise.
+part of the compact patch-release promise.

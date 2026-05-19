@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.3 - Static STEREO/EUVI Response Builder
+
+### Added
+
+- Static STEREO/EUVI temperature-response builder for Ahead and Behind using
+  packaged GX SRA calibration files.
+- EUVI effective-area, normalized IDL-view, and ComputeEUV-compatible payload
+  helpers.
+- Documentation for the EUVI static-response contract, including the S1 default
+  filter, standard EUVI channels, `obstime` as a future placeholder, and no
+  returned ephemeris metadata.
+- Parity coverage against the GX/IDL EUVI response artifacts through an external
+  local comparison workflow.
+
 ## 0.1.2 - README Status Correction
 
 ### Changed
