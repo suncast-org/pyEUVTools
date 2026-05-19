@@ -39,6 +39,11 @@ def test_build_euvi_effective_area_converts_s1_channel_to_dn_units() -> None:
     assert np.nanmax(response.effective_area.value) > 0.0
 
 
+def test_build_euvi_effective_area_rejects_negative_filter_index() -> None:
+    with pytest.raises(ValueError, match="range 0..3"):
+        euvi.build_euvi_effective_area("A171", spacecraft="ahead", filter_name=-1)
+
+
 def test_build_euvi_temperature_response_set_keeps_obstime_but_static_values() -> None:
     wave = u.Quantity([100.0, 200.0, 300.0], u.angstrom)
     logte = np.asarray([5.5, 6.0])

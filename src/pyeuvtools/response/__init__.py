@@ -87,7 +87,6 @@ __all__ = [
     "aia_get_response",
     "build_aia_effective_area",
     "build_aia_effective_area_set",
-    "build_aia_temperature_response_gx_payload",
     "build_aia_temperature_response_from_hybrid_export",
     "build_euvi_effective_area",
     "build_euvi_temperature_response_from_hybrid_export",

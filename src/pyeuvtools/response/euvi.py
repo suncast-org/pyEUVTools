@@ -124,10 +124,10 @@ def _normalize_channel(channel: int | str) -> str:
 
 def _normalize_filter(filter_name: int | str) -> str:
     if isinstance(filter_name, (int, np.integer)):
-        try:
-            return STANDARD_EUVI_FILTERS[int(filter_name)]
-        except IndexError as exc:
-            raise ValueError("EUVI filter index must be in the range 0..3.") from exc
+        index = int(filter_name)
+        if index < 0 or index >= len(STANDARD_EUVI_FILTERS):
+            raise ValueError("EUVI filter index must be in the range 0..3.")
+        return STANDARD_EUVI_FILTERS[index]
     text = str(filter_name).strip().upper()
     if text not in STANDARD_EUVI_FILTERS:
         allowed = ", ".join(STANDARD_EUVI_FILTERS)

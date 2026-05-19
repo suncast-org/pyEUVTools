@@ -80,8 +80,8 @@ rejected rather than silently coerced.
 from pyeuvtools.response import build_euvi_temperature_response_gx_payload
 
 payload, payload_dtype, meta = build_euvi_temperature_response_gx_payload(
-	spacecraft="ahead",
-	obstime="2025-11-26T15:34:31",
+    spacecraft="ahead",
+    obstime="2025-11-26T15:34:31",
 )
 
 print(meta["instrument"])
