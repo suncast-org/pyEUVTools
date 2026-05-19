@@ -89,7 +89,7 @@ def load_trace_temperature_response_idl_view(
         channels=_decode_string_array(item[field_map["CHANNELS"]]),
         logte=np.asarray(item[field_map["LOGTE"]], dtype=np.float64),
         all_response=np.asarray(item[field_map["ALL"]], dtype=np.float64),
-        ds=TRACE_PIXEL_ARCSEC,
+        ds=TRACE_PIXEL_ARCSEC**2,
         source=str(source),
         metadata=response_metadata,
     )

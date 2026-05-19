@@ -100,7 +100,7 @@ def test_load_trace_temperature_response_matches_static_gx_shape_and_channels() 
     assert response.channels == ("171oa", "195oa", "284oa")
     assert response.logte.shape == (150,)
     assert response.all_response.shape == (3, 150)
-    assert response.ds == pytest.approx(1.0)
+    assert response.ds == pytest.approx(trace.TRACE_PIXEL_ARCSEC**2)
     assert response.metadata["response_units"] == "DN cm^5 s^-1 pix^-1"
 
 
@@ -108,10 +108,10 @@ def test_build_trace_temperature_response_gx_payload_uses_static_response() -> N
     payload, payload_dtype, meta = trace.build_trace_temperature_response_gx_payload()
 
     assert payload_dtype.names == ("ds", "NT", "Nchannels", "logte", "all")
-    assert payload["ds"][0] == pytest.approx(1.0)
+    assert payload["ds"][0] == pytest.approx(trace.TRACE_PIXEL_ARCSEC**2)
     assert int(payload["NT"][0]) == 150
     assert int(payload["Nchannels"][0]) == 3
     assert payload["all"][0].shape == (3, 150)
     assert meta["channels"] == ("171oa", "195oa", "284oa")
     assert meta["pixel_arcsec"] == pytest.approx(1.0)
-    assert meta["ds_arcsec2"] == pytest.approx(1.0)
+    assert meta["ds_arcsec2"] == pytest.approx(trace.TRACE_PIXEL_ARCSEC**2)
