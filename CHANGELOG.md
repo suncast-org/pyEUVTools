@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 - Static Multi-Instrument Response Builders
+
+### Added
+
+- Static Solar Orbiter/EUI response builders for FSI and HRI using packaged GX
+  response curves and the packaged AIA hybrid emissivity grid.
+- Static Yohkoh/SXT and TRACE response loaders using packaged GX
+  temperature-response structures.
+- ComputeEUV-compatible GX payload helpers for EUI, SXT, and TRACE.
+- Public exports and documentation for the new static instrument modules.
+- Unit coverage for packaged response-file resolution, static payload shape,
+  channel labels, pixel scales, and EUI hybrid-emissivity folding.
+
+### Notes
+
+- This is a `0.2.0` feature release because it adds multiple public instrument
+  response modules. It is not yet a `1.0.0` release: several response paths are
+  intentionally static, broader SSW branches remain out of scope, and downstream
+  fixture conventions such as `ds` are still being aligned.
+
 ## 0.1.3 - Static STEREO/EUVI Response Builder
 
 ### Added

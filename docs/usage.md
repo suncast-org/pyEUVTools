@@ -97,6 +97,33 @@ The `obstime` argument is accepted for future time-dependent degradation support
 but it is not used by the current static calculation. Ephemeris and roll
 metadata are deliberately left to caller-side geometry code.
 
+## Static EUI/SXT/TRACE GX payloads
+
+```python
+from pyeuvtools.response import (
+    build_eui_temperature_response_gx_payload,
+    build_sxt_temperature_response_gx_payload,
+    build_trace_temperature_response_gx_payload,
+)
+
+eui_payload, eui_dtype, eui_meta = build_eui_temperature_response_gx_payload(
+    detector="fsi",
+    obstime="2025-11-26T15:34:31",
+)
+sxt_payload, sxt_dtype, sxt_meta = build_sxt_temperature_response_gx_payload()
+trace_payload, trace_dtype, trace_meta = build_trace_temperature_response_gx_payload()
+
+print(eui_meta["channels"])
+print(sxt_meta["channels"])
+print(trace_meta["channels"])
+```
+
+The EUI path follows GX by folding the packaged FSI or HRI 174 A response curve
+through the packaged AIA hybrid emissivity grid. The SXT and TRACE paths load
+the already-folded static GX response structures directly. These helpers return
+the same `ds`, `NT`, `Nchannels`, `logte`, and `all` structured-array layout as
+the AIA and EUVI payload builders.
+
 ## Generate and quick-plot from the exposed API
 
 To generate a compact AIA response artifact through the public

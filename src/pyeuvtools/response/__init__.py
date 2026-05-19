@@ -34,6 +34,17 @@ from .compare import (
     plot_aia_temperature_response_comparison,
     save_aia_temperature_response_comparison_data,
 )
+from .eui import (
+    EUI_CHANNEL,
+    EUI_CHANNEL_IDL,
+    EUIEffectiveArea,
+    build_eui_effective_area,
+    build_eui_temperature_response_from_hybrid_export,
+    build_eui_temperature_response_gx_payload,
+    build_eui_temperature_response_idl_view,
+    build_eui_temperature_response_set,
+    resolve_eui_response_path,
+)
 from .euvi import (
     DEFAULT_EUVI_FILTER,
     STANDARD_EUVI_CHANNELS,
@@ -70,6 +81,18 @@ from .models import (
     TemperatureResponseSet,
     WavelengthResponseSet,
 )
+from .sxt import (
+    SXT_PIXEL_ARCSEC,
+    build_sxt_temperature_response_gx_payload,
+    load_sxt_temperature_response_idl_view,
+    resolve_sxt_response_path,
+)
+from .trace import (
+    TRACE_PIXEL_ARCSEC,
+    build_trace_temperature_response_gx_payload,
+    load_trace_temperature_response_idl_view,
+    resolve_trace_response_path,
+)
 
 __all__ = [
     "AIAChiantifixExport",
@@ -81,6 +104,9 @@ __all__ = [
     "AIAIDLComparison",
     "AIATemperatureIDLComparison",
     "DEFAULT_EUVI_FILTER",
+    "EUIEffectiveArea",
+    "EUI_CHANNEL",
+    "EUI_CHANNEL_IDL",
     "EUVISRAResponse",
     "EUVIChannelEffectiveArea",
     "apply_aia_chiantifix",
@@ -93,6 +119,13 @@ __all__ = [
     "build_euvi_temperature_response_gx_payload",
     "build_euvi_temperature_response_idl_view",
     "build_euvi_temperature_response_set",
+    "build_eui_effective_area",
+    "build_eui_temperature_response_from_hybrid_export",
+    "build_eui_temperature_response_gx_payload",
+    "build_eui_temperature_response_idl_view",
+    "build_eui_temperature_response_set",
+    "build_sxt_temperature_response_gx_payload",
+    "build_trace_temperature_response_gx_payload",
     "compare_aia_hybrid_export_to_idl",
     "build_fiasco_ion_spectrum_grid",
     "ensure_fiasco_database",
@@ -104,7 +137,9 @@ __all__ = [
     "IDLAIAResponse",
     "STANDARD_AIA_EUV_CHANNELS",
     "STANDARD_EUVI_CHANNELS",
+    "SXT_PIXEL_ARCSEC",
     "TemperatureResponseSet",
+    "TRACE_PIXEL_ARCSEC",
     "WavelengthResponseSet",
     "build_aia_temperature_response_gx_payload",
     "build_aia_temperature_response_idl_view",
@@ -121,11 +156,16 @@ __all__ = [
     "load_fiasco_spectrum_grid",
     "load_aia_temperature_response_comparison_data",
     "load_euvi_sra",
+    "load_sxt_temperature_response_idl_view",
+    "load_trace_temperature_response_idl_view",
     "load_idl_aia_response",
     "plot_aia_temperature_response_comparison",
     "rebuild_fiasco_database",
     "resolve_aia_hybrid_genx_export_path",
     "resolve_euvi_sra_path",
+    "resolve_eui_response_path",
+    "resolve_sxt_response_path",
+    "resolve_trace_response_path",
     "save_fiasco_ion_screening",
     "save_fiasco_spectrum_grid",
     "save_aia_temperature_response_comparison_data",
