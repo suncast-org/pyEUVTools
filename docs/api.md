@@ -94,6 +94,35 @@ under `src/pyeuvtools/data/aia/chiantifix-exports/`. The IDL helper
 `scripts/idl/ExportAIAChiantifix.pro` remains the contributor refresh path for
 rebuilding that packaged asset from the SSW `.genx` source.
 
+## EUVI module
+
+`pyeuvtools.response.euvi` provides:
+
+- `resolve_euvi_sra_path` to resolve the packaged STEREO/EUVI SRA calibration file for Ahead or Behind
+- `load_euvi_sra` to load the SRA wavelength/effective-area calibration data
+- `build_euvi_effective_area` to build one channel effective-area curve
+- `build_euvi_temperature_response_set` to fold the EUVI effective areas through the packaged AIA hybrid emissivity grid
+- `build_euvi_temperature_response_idl_view` to expose the normalized `instrument/channels/LOGTE/ALL` view
+- `build_euvi_temperature_response_gx_payload` to return the structured-array payload expected by downstream `ComputeEUV`-style consumers
+
+The EUVI implementation intentionally follows the current GX Simulator path:
+it uses the S1 filter, the standard 171, 195, 284, and 304 A channels, and one
+packaged SRA calibration file per spacecraft:
+
+- `src/pyeuvtools/data/euvi/sra/ahead_sra_001.geny`
+- `src/pyeuvtools/data/euvi/sra/behind_sra_001.geny`
+
+These response functions are static. The public constructors accept `obstime`
+as a future-compatible placeholder, but the current calculation does not use it
+and does not return observer ephemeris, roll, or position-angle metadata. Those
+quantities should be computed by caller-side geometry code when they are needed.
+
+For downstream GX integration, the intended public bridge is
+`build_euvi_temperature_response_gx_payload(...)`. It returns the same
+high-level triple as the AIA bridge: a length-1 structured NumPy payload, the
+dtype used to build it, and metadata describing the instrument, spacecraft,
+channels, response units, pixel scale, and normalized IDL-style view.
+
 ## CHIANTI backend prototype
 
 `pyeuvtools.response.chianti` currently provides:
