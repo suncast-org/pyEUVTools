@@ -8,7 +8,7 @@ broader SunCAST Python ecosystem while remaining usable as a standalone library.
 ## Initial Mission
 
 - expose a Pythonic interface to time-dependent AIA wavelength response functions
-- provide static STEREO/EUVI temperature-response payloads compatible with GX-style consumers
+- provide static STEREO/EUVI, Solar Orbiter/EUI, Yohkoh/SXT, and TRACE temperature-response payloads compatible with GX-style consumers
 - provide reusable response-table data models
 - build toward GX-compatible temperature response tables
 
@@ -16,7 +16,7 @@ broader SunCAST Python ecosystem while remaining usable as a standalone library.
 
 The long-term design is intentionally broader than AIA. The package structure is
 meant to accommodate additional instruments and response builders in future work;
-the first non-AIA implementation is the static STEREO/EUVI response path.
+the first non-AIA implementations are static GX-compatible response paths.
 
 Current implementation planning for the practical AIA hybrid route is documented
 in [hybrid_backend_design.md](hybrid_backend_design.md).

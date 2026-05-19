@@ -34,6 +34,8 @@ for the shipped public surface.
 - AIA wavelength-response wrappers powered by `aiapy`
 - raw AIA temperature-response folding equivalent to the numerical step in SSW `aia_bp_make_tresp.pro`
 - static STEREO/EUVI temperature-response payloads for Ahead and Behind, using packaged SRA calibration files and the same AIA hybrid emissivity grid used by the AIA path
+- static Solar Orbiter/EUI FSI and HRI temperature-response payloads, using packaged GX response curves and the same AIA hybrid emissivity grid used by the AIA path
+- static Yohkoh/SXT and TRACE temperature-response payloads loaded from packaged GX response structures
 - optional `fiasco` backend introspection and database bootstrap helpers for Python-native CHIANTI access
 - IDL fixture comparison helpers for assessing structural parity against GX-style AIA response SAV files
 - canonical benchmark planning for raw IDL AIA temperature-response fixtures with full provenance
@@ -89,6 +91,7 @@ should not write into the clone by default.
 - Repo-local writes are intentional contributor actions and should use explicit paths such as `--artifact-dir benchmark-results/...` or IDL `outdir='benchmark-data/...'`.
 - The currently shipped runtime AIA V9 exports live under `src/pyeuvtools/data/aia/`.
 - The currently shipped EUVI SRA calibration files live under `src/pyeuvtools/data/euvi/sra/`.
+- The currently shipped EUI, SXT, and TRACE static GX response files live under `src/pyeuvtools/data/eui/`, `src/pyeuvtools/data/sxt/`, and `src/pyeuvtools/data/trace/`.
 - The currently committed benchmark/provenance copy of the AIA V9 hybrid export remains at `benchmark-data/aia/genx-exports/aia_V9/aia_hybrid_genx_export_v1.sav`.
 
 For a backend-local note describing what this prototype already covers, what was
@@ -145,12 +148,13 @@ For this repository, Zenodo and PyPI are intentionally decoupled:
 
 ## Status
 
-This repository now ships a usable compact AIA response API, static STEREO/EUVI
-temperature responses, and public GX bridge helpers needed for downstream
-ComputeEUV packing. In particular, the Python `aia_get_response` wrapper covers
-compact `effective_area`, `emissivity`, and `temperature` responses with explicit
-non-interactive correction states: `raw`, `evenorm`, and `evenorm_chiantifix`.
+This repository now ships a usable compact AIA response API, static
+multi-instrument temperature responses, and public GX bridge helpers needed for
+downstream ComputeEUV packing. In particular, the Python `aia_get_response`
+wrapper covers compact `effective_area`, `emissivity`, and `temperature`
+responses with explicit non-interactive correction states: `raw`, `evenorm`,
+and `evenorm_chiantifix`.
 
-The local metadata now targets **0.1.3**. Remaining broader SSW surface coverage such as
+The local metadata now targets **0.2.0**. Remaining broader SSW surface coverage such as
 `full`, `all`, and `uv` stays documented as later-milestone work rather than as
-part of the compact patch-release promise.
+part of the current feature-release promise.

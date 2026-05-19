@@ -381,7 +381,7 @@ def build_euvi_temperature_response_idl_view(
                 for channel in response_set.channels
             ]
         ),
-        ds=_EUVI_PIXEL_ARCSEC[sc],
+        ds=_EUVI_PIXEL_ARCSEC[sc] ** 2,
         source="python-generated",
         metadata=response_metadata,
     )
@@ -488,7 +488,8 @@ def build_euvi_temperature_response_gx_payload(
         "filter": response.metadata.get("filter", DEFAULT_EUVI_FILTER),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.euvi.build_euvi_temperature_response_gx_payload",
-        "ds_arcsec": float(response.ds),
+        "pixel_arcsec": float(response.metadata["pixel_arcsec"]),
+        "ds_arcsec2": float(response.ds),
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata

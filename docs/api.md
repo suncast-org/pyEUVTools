@@ -83,7 +83,8 @@ For downstream GX integration, the intended public bridge is
 - a length-1 structured NumPy array ready for direct downstream packing
 - the exact dtype used to build that array
 - a lightweight metadata dictionary carrying instrument, channels,
-  `correction_state`, `response_units`, the chosen `ds_arcsec`, and the nested
+  `correction_state`, `response_units`, the chosen response pixel area
+  `ds_arcsec2`, and the nested
   normalized IDL-view metadata
 
 This keeps the response-construction logic in `pyEUVTools` while avoiding a hard
@@ -122,6 +123,51 @@ For downstream GX integration, the intended public bridge is
 high-level triple as the AIA bridge: a length-1 structured NumPy payload, the
 dtype used to build it, and metadata describing the instrument, spacecraft,
 channels, response units, pixel scale, and normalized IDL-style view.
+The payload `ds` field follows the ComputeEUV/GX convention and stores response
+pixel area in arcsec^2; the linear pixel scale is retained separately as
+`pixel_arcsec` metadata.
+
+## EUI module
+
+`pyeuvtools.response.eui` provides static Solar Orbiter/EUI response helpers:
+
+- `resolve_eui_response_path` to resolve the packaged FSI or HRI GX response curve
+- `build_eui_effective_area` to load the wavelength response and convert it to the units used by the AIA temperature fold
+- `build_eui_temperature_response_set` to fold the EUI response through an emissivity grid
+- `build_eui_temperature_response_idl_view` to expose the normalized `instrument/channels/LOGTE/ALL` view
+- `build_eui_temperature_response_gx_payload` to return the structured-array payload expected by downstream `ComputeEUV`-style consumers
+
+The EUI implementation follows the GX Simulator path for the 174 A band. It uses
+one packaged response curve for each detector:
+
+- `src/pyeuvtools/data/eui/EUIFSI_GXResponse.sav`
+- `src/pyeuvtools/data/eui/EUIHRI_GXResponse.sav`
+
+The public constructors accept `obstime` as a future-compatible placeholder, but
+the current calculation is static and does not return Solar Orbiter ephemeris or
+roll metadata.
+
+## SXT and TRACE modules
+
+`pyeuvtools.response.sxt` and `pyeuvtools.response.trace` provide static loaders
+for the already-folded GX temperature-response structures:
+
+- `resolve_sxt_response_path`
+- `load_sxt_temperature_response_idl_view`
+- `build_sxt_temperature_response_gx_payload`
+- `resolve_trace_response_path`
+- `load_trace_temperature_response_idl_view`
+- `build_trace_temperature_response_gx_payload`
+
+The packaged runtime files are:
+
+- `src/pyeuvtools/data/sxt/sxt_response.sav`
+- `src/pyeuvtools/data/trace/trace_response.sav`
+
+The SXT loader mirrors GX channel normalization by converting `GAL12/GAL13`
+labels to `A12/A13`. TRACE preserves the GX channel labels `171oa`, `195oa`,
+and `284oa`. As with EUVI and EUI, `obstime` is retained only as a future
+placeholder and no ephemeris fields are returned.
 
 ## CHIANTI backend prototype
 

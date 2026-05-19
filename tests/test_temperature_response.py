@@ -111,6 +111,7 @@ def test_build_aia_temperature_response_set_collects_channel_results(
         emissivity=u.Quantity([[1.0, 2.0], [3.0, 4.0]], u.dimensionless_unscaled),
         channels=(94, 171),
         include_eve_correction=True,
+        correction_table={"source": "unit-test"},
     )
 
     assert response_set.instrument == "AIA"

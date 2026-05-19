@@ -1129,7 +1129,8 @@ def build_aia_temperature_response_gx_payload(
     include_chiantifix: bool = False,
     chiantifix_export: str | Path | AIAChiantifixExport | None = None,
     metadata: dict[str, str] | None = None,
-    ds_arcsec: float = _GX_AIA_DS_ARCSEC,
+    ds_arcsec2: float | None = None,
+    ds_arcsec: float | None = None,
 ) -> tuple[np.ndarray, np.dtype, dict[str, object]]:
     """Build a ComputeEUV-compatible AIA temperature-response payload.
 
@@ -1157,6 +1158,24 @@ def build_aia_temperature_response_gx_payload(
         metadata=metadata,
     )
 
+    if ds_arcsec is not None and ds_arcsec2 is not None:
+        raise ValueError("Pass at most one of ds_arcsec2= or deprecated ds_arcsec=.")
+    if ds_arcsec is not None:
+        warnings.warn(
+            "The ds_arcsec= keyword is deprecated for AIA GX payloads; use ds_arcsec2= instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    ds_value = float(
+        _GX_AIA_DS_ARCSEC
+        if ds_arcsec is None and ds_arcsec2 is None
+        else ds_arcsec
+        if ds_arcsec is not None
+        else ds_arcsec2
+    )
+    if ds_value < 0:
+        raise ValueError("AIA GX payload ds must be non-negative response pixel area in arcsec^2.")
+    pixel_arcsec = float(np.sqrt(ds_value))
     nt = int(response.logte.size)
     nchan = int(len(response.channels))
     response_dtype = np.dtype(
@@ -1169,7 +1188,7 @@ def build_aia_temperature_response_gx_payload(
         ]
     )
     payload = np.zeros(1, dtype=response_dtype)
-    payload["ds"] = float(ds_arcsec)
+    payload["ds"] = ds_value
     payload["NT"] = nt
     payload["Nchannels"] = nchan
     payload["logte"] = np.asarray(response.logte, dtype=np.float64)
@@ -1181,7 +1200,8 @@ def build_aia_temperature_response_gx_payload(
         "correction_state": response.metadata.get("correction_state", "raw"),
         "response_units": response.metadata.get("response_units", ""),
         "source": "pyeuvtools.response.aia.build_aia_temperature_response_gx_payload",
-        "ds_arcsec": float(ds_arcsec),
+        "pixel_arcsec": pixel_arcsec,
+        "ds_arcsec2": ds_value,
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata
