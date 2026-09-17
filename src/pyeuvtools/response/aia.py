@@ -1125,7 +1125,7 @@ def build_aia_temperature_response_gx_payload(
     instrument_file: str | Path | None = None,
     response_root: str | Path | None = None,
     calibration_version: int | None = None,
-    platescale: u.Quantity = 1.0 * u.dimensionless_unscaled,
+    platescale: u.Quantity | None = None,
     include_chiantifix: bool = False,
     chiantifix_export: str | Path | AIAChiantifixExport | None = None,
     metadata: dict[str, str] | None = None,
@@ -1138,26 +1138,6 @@ def build_aia_temperature_response_gx_payload(
     current downstream ComputeEUV path expects: `ds`, `NT`, `Nchannels`,
     `logte`, and `all`.
     """
-    response = build_aia_temperature_response_idl_view(
-        obstime=obstime,
-        emissivity_wavelength=emissivity_wavelength,
-        emissivity_logte=emissivity_logte,
-        emissivity=emissivity,
-        channels=channels,
-        version=version,
-        respversion=respversion,
-        include_eve_correction=include_eve_correction,
-        include_crosstalk=include_crosstalk,
-        correction_table=correction_table,
-        instrument_file=instrument_file,
-        response_root=response_root,
-        calibration_version=calibration_version,
-        platescale=platescale,
-        include_chiantifix=include_chiantifix,
-        chiantifix_export=chiantifix_export,
-        metadata=metadata,
-    )
-
     if ds_arcsec is not None and ds_arcsec2 is not None:
         raise ValueError("Pass at most one of ds_arcsec2= or deprecated ds_arcsec=.")
     if ds_arcsec is not None:
@@ -1175,6 +1155,37 @@ def build_aia_temperature_response_gx_payload(
     )
     if ds_value < 0:
         raise ValueError("AIA GX payload ds must be non-negative response pixel area in arcsec^2.")
+
+    # GX/SSW AIA responses are per detector pixel, while the emissivity export
+    # is per steradian. Use the response pixel area as the default solid angle
+    # before chiantifix is applied so both the folded response and correction
+    # delta have compatible per-pixel units.
+    effective_platescale = (
+        (ds_value * u.arcsec**2).to(u.sr)
+        if platescale is None
+        else u.Quantity(platescale, copy=False)
+    )
+
+    response = build_aia_temperature_response_idl_view(
+        obstime=obstime,
+        emissivity_wavelength=emissivity_wavelength,
+        emissivity_logte=emissivity_logte,
+        emissivity=emissivity,
+        channels=channels,
+        version=version,
+        respversion=respversion,
+        include_eve_correction=include_eve_correction,
+        include_crosstalk=include_crosstalk,
+        correction_table=correction_table,
+        instrument_file=instrument_file,
+        response_root=response_root,
+        calibration_version=calibration_version,
+        platescale=effective_platescale,
+        include_chiantifix=include_chiantifix,
+        chiantifix_export=chiantifix_export,
+        metadata=metadata,
+    )
+
     pixel_arcsec = float(np.sqrt(ds_value))
     nt = int(response.logte.size)
     nchan = int(len(response.channels))
@@ -1202,6 +1213,7 @@ def build_aia_temperature_response_gx_payload(
         "source": "pyeuvtools.response.aia.build_aia_temperature_response_gx_payload",
         "pixel_arcsec": pixel_arcsec,
         "ds_arcsec2": ds_value,
+        "platescale_sr": float(effective_platescale.to_value(u.sr)),
         "idl_view_metadata": dict(response.metadata),
     }
     return payload, response_dtype, payload_metadata

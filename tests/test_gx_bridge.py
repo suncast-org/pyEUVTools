@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import astropy.units as u
 import numpy as np
 import pytest
 
@@ -28,12 +29,21 @@ def _fake_aia_idl_response() -> IDLAIAResponse:
     )
 
 
-def _patch_aia_idl_view(monkeypatch: pytest.MonkeyPatch) -> IDLAIAResponse:
+def _patch_aia_idl_view(
+    monkeypatch: pytest.MonkeyPatch,
+    captured: dict | None = None,
+) -> IDLAIAResponse:
     fake_response = _fake_aia_idl_response()
+
+    def fake_builder(*args, **kwargs):
+        if captured is not None:
+            captured.update(kwargs)
+        return fake_response
+
     monkeypatch.setattr(
         aia,
         "build_aia_temperature_response_idl_view",
-        lambda *args, **kwargs: fake_response,
+        fake_builder,
     )
     return fake_response
 
@@ -41,7 +51,8 @@ def _patch_aia_idl_view(monkeypatch: pytest.MonkeyPatch) -> IDLAIAResponse:
 def test_build_aia_temperature_response_gx_payload_returns_computeeuv_shape(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    fake_response = _patch_aia_idl_view(monkeypatch)
+    captured = {}
+    fake_response = _patch_aia_idl_view(monkeypatch, captured)
 
     payload, payload_dtype, meta = aia.build_aia_temperature_response_gx_payload(
         emissivity_wavelength=np.asarray([10.0, 20.0]),
@@ -66,6 +77,9 @@ def test_build_aia_temperature_response_gx_payload_returns_computeeuv_shape(
     assert meta["source"] == "pyeuvtools.response.aia.build_aia_temperature_response_gx_payload"
     assert meta["pixel_arcsec"] == pytest.approx(0.6)
     assert meta["ds_arcsec2"] == pytest.approx(0.36)
+    expected_sr = (0.36 * u.arcsec**2).to_value(u.sr)
+    assert captured["platescale"].to_value(u.sr) == pytest.approx(expected_sr)
+    assert meta["platescale_sr"] == pytest.approx(expected_sr)
 
 
 def test_build_aia_temperature_response_gx_payload_deprecates_ds_arcsec_alias(
@@ -84,6 +98,25 @@ def test_build_aia_temperature_response_gx_payload_deprecates_ds_arcsec_alias(
     assert payload["ds"][0] == pytest.approx(0.49)
     assert meta["ds_arcsec2"] == pytest.approx(0.49)
     assert meta["pixel_arcsec"] == pytest.approx(0.7)
+    assert meta["platescale_sr"] == pytest.approx((0.49 * u.arcsec**2).to_value(u.sr))
+
+
+def test_build_aia_temperature_response_gx_payload_honors_explicit_platescale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured = {}
+    _patch_aia_idl_view(monkeypatch, captured)
+    explicit = 2.5e-11 * u.sr
+
+    _payload, _payload_dtype, meta = aia.build_aia_temperature_response_gx_payload(
+        emissivity_wavelength=np.asarray([10.0, 20.0]),
+        emissivity_logte=np.asarray([5.0, 6.0, 7.0]),
+        emissivity=np.asarray([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+        platescale=explicit,
+    )
+
+    assert captured["platescale"] == explicit
+    assert meta["platescale_sr"] == pytest.approx(explicit.to_value(u.sr))
 
 
 def test_build_aia_temperature_response_gx_payload_rejects_conflicting_ds_keywords(
