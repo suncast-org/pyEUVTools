@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.1 - AIA GX Response Units
+
+### Added
+
+- Seven-channel AIA GX response regression coverage against a frozen SolarSoft
+  IDL `evenorm=1, chiantifix=1` response and time-dependent correction table.
+
+### Fixed
+
+- AIA GX payloads now convert the response pixel area from arcsec^2 to
+  steradians before folding emissivity. This restores the IDL per-pixel units,
+  removes the former inverse-solid-angle scale error, and makes the
+  `evenorm_chiantifix` path dimensionally compatible.
+
 ## 0.2.0 - Static Multi-Instrument Response Builders
 
 ### Added
@@ -15,15 +29,6 @@
 - GX payload `ds` values now follow the ComputeEUV convention of response
   pixel area in arcsec^2, with linear pixel scale reported separately as
   `pixel_arcsec` metadata.
-- Seven-channel AIA GX response regression coverage against a frozen SolarSoft
-  IDL `evenorm=1, chiantifix=1` response and time-dependent correction table.
-
-### Fixed
-
-- AIA GX payloads now convert the response pixel area from arcsec^2 to
-  steradians before folding emissivity. This restores the IDL per-pixel units,
-  removes the former inverse-solid-angle scale error, and makes the
-  `evenorm_chiantifix` path dimensionally compatible.
 
 ### Notes
 

@@ -1,6 +1,6 @@
 {
   "title": "pyEUVTools: EUV Instrument Response Tools",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "upload_type": "software",
   "description": "pyEUVTools is a SunCAST Python package for building, inspecting, and exporting EUV instrument response products. It is designed as a reusable response-function layer for the broader SunCAST Python ecosystem, is maintained in the suncast-org GitHub organization, and starts with AIA time-dependent response support before evolving toward generalized multi-instrument EUV response tooling.",
   "creators": [
@@ -30,5 +30,5 @@
   ],
   "language": "eng",
   "publication_date": "2026-05-04",
-  "notes": "Release metadata for the 0.2.0 feature release. Zenodo should archive the GitHub release under the suncast-org repository while crediting Gelu M. Nita as the named creator in this metadata. This release expands the static GX-compatible response layer with Solar Orbiter/EUI, Yohkoh/SXT, and TRACE support."
+  "notes": "Release metadata for the 0.2.1 patch release. Zenodo should archive the GitHub release under the suncast-org repository while crediting Gelu M. Nita as the named creator in this metadata. This patch restores IDL per-pixel units for the AIA GX evenorm_chiantifix response."
 }
