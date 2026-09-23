@@ -84,7 +84,7 @@ For downstream GX integration, the intended public bridge is
 - the exact dtype used to build that array
 - a lightweight metadata dictionary carrying instrument, channels,
   `correction_state`, `response_units`, the chosen response pixel area
-  `ds_arcsec2`, and the nested
+  `ds_arcsec2`, its solid angle `platescale_sr`, and the nested
   normalized IDL-view metadata
 
 This keeps the response-construction logic in `pyEUVTools` while avoiding a hard

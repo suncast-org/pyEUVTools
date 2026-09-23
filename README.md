@@ -155,6 +155,6 @@ wrapper covers compact `effective_area`, `emissivity`, and `temperature`
 responses with explicit non-interactive correction states: `raw`, `evenorm`,
 and `evenorm_chiantifix`.
 
-The local metadata now targets **0.2.0**. Remaining broader SSW surface coverage such as
+The local metadata now targets **0.2.1**. Remaining broader SSW surface coverage such as
 `full`, `all`, and `uv` stays documented as later-milestone work rather than as
 part of the current feature-release promise.
