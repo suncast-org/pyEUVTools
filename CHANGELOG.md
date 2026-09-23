@@ -13,6 +13,8 @@
   steradians before folding emissivity. This restores the IDL per-pixel units,
   removes the former inverse-solid-angle scale error, and makes the
   `evenorm_chiantifix` path dimensionally compatible.
+- An explicit GX `platescale` must be a solid angle. A dimensionless override
+  is rejected before the response is folded.
 
 ## 0.2.0 - Static Multi-Instrument Response Builders
 

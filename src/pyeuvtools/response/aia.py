@@ -1160,11 +1160,15 @@ def build_aia_temperature_response_gx_payload(
     # is per steradian. Use the response pixel area as the default solid angle
     # before chiantifix is applied so both the folded response and correction
     # delta have compatible per-pixel units.
-    effective_platescale = (
-        (ds_value * u.arcsec**2).to(u.sr)
-        if platescale is None
-        else u.Quantity(platescale, copy=False)
-    )
+    if platescale is None:
+        effective_platescale = (ds_value * u.arcsec**2).to(u.sr)
+    else:
+        try:
+            effective_platescale = u.Quantity(platescale, copy=False).to(u.sr)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(
+                "platescale must be a solid angle, for example arcsec^2 or sr."
+            ) from exc
 
     response = build_aia_temperature_response_idl_view(
         obstime=obstime,

@@ -119,6 +119,41 @@ def test_build_aia_temperature_response_gx_payload_honors_explicit_platescale(
     assert meta["platescale_sr"] == pytest.approx(explicit.to_value(u.sr))
 
 
+def test_build_aia_temperature_response_gx_payload_rejects_dimensionless_platescale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured = {}
+    _patch_aia_idl_view(monkeypatch, captured)
+
+    with pytest.raises(ValueError, match="solid angle"):
+        aia.build_aia_temperature_response_gx_payload(
+            emissivity_wavelength=np.asarray([10.0, 20.0]),
+            emissivity_logte=np.asarray([5.0, 6.0, 7.0]),
+            emissivity=np.asarray([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+            platescale=1.0 * u.dimensionless_unscaled,
+        )
+
+    assert captured == {}
+
+
+def test_build_aia_temperature_response_gx_payload_normalizes_arcsec_platescale(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured = {}
+    _patch_aia_idl_view(monkeypatch, captured)
+    explicit = 0.36 * u.arcsec**2
+
+    _payload, _payload_dtype, meta = aia.build_aia_temperature_response_gx_payload(
+        emissivity_wavelength=np.asarray([10.0, 20.0]),
+        emissivity_logte=np.asarray([5.0, 6.0, 7.0]),
+        emissivity=np.asarray([[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]),
+        platescale=explicit,
+    )
+
+    assert captured["platescale"].unit == u.sr
+    assert meta["platescale_sr"] == pytest.approx(explicit.to_value(u.sr))
+
+
 def test_build_aia_temperature_response_gx_payload_rejects_conflicting_ds_keywords(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
